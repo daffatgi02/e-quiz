@@ -47,9 +47,15 @@
                                     @foreach($question->options as $option)
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" disabled
-                                                {{ $userAnswer && $userAnswer->question_option_id == $option->id ? 'checked' : '' }}>
+                                                   {{ $userAnswer && $userAnswer->question_option_id == $option->id ? 'checked' : '' }}>
                                             <label class="form-check-label">
                                                 {{ $option->option }}
+                                                @if ($userAnswer && $userAnswer->question_option_id == $option->id)
+                                                    @if (!$option->is_correct)
+                                                        <i class="fas fa-times-circle text-danger ms-2"></i>
+                                                        <span class="badge bg-danger ms-2">Jawaban Anda (Salah)</span>
+                                                    @endif
+                                                @endif
                                                 @if($option->is_correct)
                                                     <span class="badge bg-success ms-2">{{ __('quiz.correct_answer') }}</span>
                                                 @endif

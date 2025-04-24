@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\IsAdmin::class,
         'language' => \App\Http\Middleware\SetLanguage::class,
+        'check_quiz_progress' => \App\Http\Middleware\CheckQuizInProgress::class,
     ];
 }

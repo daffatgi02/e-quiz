@@ -25,11 +25,40 @@
                 min-width: 30px;
             }
         }
+
+        /* Floating button styles */
+        .btn.rounded-circle {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn.rounded-circle i {
+            margin: 0 !important;
+        }
     </style>
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h1 class="mb-4">{{ __('quiz.title') }}</h1>
+                <h1 class="mb-4">SELAMAT DATANG!</h1>
+
+                {{-- Alert untuk quiz yang sedang dikerjakan --}}
+                @if ($inProgressAttempts && $inProgressAttempts->count() > 0)
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ __('quiz.in_progress_alert') }}
+                        </h5>
+
+                        @foreach ($inProgressAttempts as $attempt)
+                            <p>{{ __('quiz.you_have_quiz_in_progress') }}: <strong>{{ $attempt->quiz->title }}</strong></p>
+                        @endforeach
+
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
 
                 <!-- Upcoming Quiz Alert (Mobile Friendly) -->
                 @if ($upcomingQuizzes->isNotEmpty())
@@ -96,9 +125,23 @@
                                         </div>
                                     </div>
                                     <div class="quiz-action mt-2">
-                                        @if (
-                                            $quiz->single_attempt &&
-                                                $quiz->attempts()->where('user_id', auth()->id())->exists())
+                                        @php
+                                            $userInProgressAttempt = $inProgressAttempts
+                                                ->where('quiz_id', $quiz->id)
+                                                ->first();
+                                            $hasCompletedAttempt = $quiz
+                                                ->attempts()
+                                                ->where('user_id', auth()->id())
+                                                ->where('status', '!=', 'in_progress')
+                                                ->exists();
+                                        @endphp
+
+                                        @if ($userInProgressAttempt)
+                                            <a href="{{ route('quiz.take', $userInProgressAttempt) }}"
+                                                class="btn btn-warning btn-sm">
+                                                {{ __('quiz.continue') }}
+                                            </a>
+                                        @elseif($quiz->single_attempt && $hasCompletedAttempt)
                                             <span class="badge bg-secondary">{{ __('quiz.already_attempted') }}</span>
                                         @else
                                             <a href="{{ route('quiz.start', $quiz) }}" class="btn btn-primary btn-sm">
@@ -110,40 +153,7 @@
                             </div>
                         @empty
                             <div class="text-center py-4">
-                                <img src="{{ asset('images/no-quiz.svg') }}" alt="No Quiz" class="mb-3"
-                                    style="max-width: 150px;">
                                 <h6>{{ __('quiz.no_active_quizzes') }}</h6>
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-
-                <!-- Quiz yang Akan Datang -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0">⏳ {{ __('quiz.upcoming_quizzes') }}</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        @forelse($upcomingQuizzes as $quiz)
-                            <div class="quiz-card p-3 border-bottom">
-                                <div class="quiz-info">
-                                    <h6 class="mb-1">{{ $quiz->title }}</h6>
-                                    <p class="mb-2 text-muted small">{{ Str::limit($quiz->description, 60) }}</p>
-                                    <div class="quiz-meta">
-                                        <span class="badge bg-light text-dark me-2">
-                                            <i class="fas fa-calendar"></i>
-                                            {{ $quiz->start_date->format('d M Y H:i') }}
-                                        </span>
-                                        <span class="badge bg-light text-dark">
-                                            <i class="fas fa-clock"></i>
-                                            {{ $quiz->duration }} {{ __('quiz.minutes') }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="text-center py-4">
-                                <h6>{{ __('quiz.no_upcoming_quizzes') }}</h6>
                             </div>
                         @endforelse
                     </div>
@@ -199,6 +209,13 @@
                     @endif
                 </div>
             </div>
+        </div>
+        <!-- Floating Refresh Button -->
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <button class="btn btn-primary rounded-circle shadow" onclick="location.reload();"
+                title="{{ __('general.refresh') }}">
+                <i class="fas fa-sync-alt"></i>
+            </button>
         </div>
     </div>
 

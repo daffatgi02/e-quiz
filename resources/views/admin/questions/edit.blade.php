@@ -1,4 +1,4 @@
-{{-- resources/views/admin/questions/create.blade.php --}}
+{{-- resources/views/admin/questions/edit.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
@@ -6,15 +6,16 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">{{ __('quiz.create_question') }} - {{ $quiz->title }}</div>
+                <div class="card-header">{{ __('quiz.edit_question') }} - {{ $quiz->title }}</div>
 
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.quizzes.questions.store', $quiz) }}" id="questionForm">
+                    <form method="POST" action="{{ route('admin.quizzes.questions.update', [$quiz, $question]) }}" id="questionForm">
                         @csrf
+                        @method('PUT')
 
                         <div class="mb-3">
                             <label for="question" class="form-label">{{ __('quiz.question') }}</label>
-                            <textarea class="form-control @error('question') is-invalid @enderror" id="question" name="question" rows="3" required>{{ old('question') }}</textarea>
+                            <textarea class="form-control @error('question') is-invalid @enderror" id="question" name="question" rows="3" required>{{ old('question', $question->question) }}</textarea>
                             @error('question')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -23,8 +24,8 @@
                         <div class="mb-3">
                             <label for="type" class="form-label">{{ __('general.type') }}</label>
                             <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
-                                <option value="multiple_choice" {{ old('type') == 'multiple_choice' ? 'selected' : '' }}>{{ __('quiz.multiple_choice') }}</option>
-                                <option value="essay" {{ old('type') == 'essay' ? 'selected' : '' }}>{{ __('quiz.essay') }}</option>
+                                <option value="multiple_choice" {{ old('type', $question->type) == 'multiple_choice' ? 'selected' : '' }}>{{ __('quiz.multiple_choice') }}</option>
+                                <option value="essay" {{ old('type', $question->type) == 'essay' ? 'selected' : '' }}>{{ __('quiz.essay') }}</option>
                             </select>
                             @error('type')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -33,7 +34,7 @@
 
                         <div class="mb-3">
                             <label for="points" class="form-label">{{ __('quiz.points') }}</label>
-                            <input type="number" class="form-control @error('points') is-invalid @enderror" id="points" name="points" value="{{ old('points', 1) }}" min="1" required>
+                            <input type="number" class="form-control @error('points') is-invalid @enderror" id="points" name="points" value="{{ old('points', $question->points) }}" min="1" required>
                             @error('points')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -47,12 +48,12 @@
                                 </button>
                             </div>
                             <div id="options-list">
-                                @if(old('options'))
-                                    @foreach(old('options') as $index => $option)
+                                @if($question->type === 'multiple_choice' && $question->options->count())
+                                    @foreach($question->options as $index => $option)
                                         <div class="input-group mb-2 option-item">
-                                            <input type="text" class="form-control" name="options[{{ $index }}][option]" value="{{ $option['option'] }}" placeholder="{{ __('quiz.option') }} {{ $index + 1 }}">
+                                            <input type="text" class="form-control" name="options[{{ $index }}][option]" value="{{ old('options.'.$index.'.option', $option->option) }}" placeholder="{{ __('quiz.option') }} {{ $index + 1 }}">
                                             <div class="input-group-text">
-                                                <input class="form-check-input mt-0" type="radio" name="correct_option" value="{{ $index }}" {{ old('correct_option') == $index ? 'checked' : '' }}>
+                                                <input class="form-check-input mt-0" type="radio" name="correct_option" value="{{ $index }}" {{ old('correct_option', $option->is_correct ? $index : null) == $index ? 'checked' : '' }}>
                                             </div>
                                             @if($index >= 2)
                                                 <button class="btn btn-danger" type="button" onclick="removeOption(this)">
@@ -64,9 +65,9 @@
                                 @else
                                     @for($i = 0; $i < 4; $i++)
                                         <div class="input-group mb-2 option-item">
-                                            <input type="text" class="form-control" name="options[{{ $i }}][option]" placeholder="{{ __('quiz.option') }} {{ $i + 1 }}">
+                                            <input type="text" class="form-control" name="options[{{ $i }}][option]" value="{{ old('options.'.$i.'.option') }}" placeholder="{{ __('quiz.option') }} {{ $i + 1 }}">
                                             <div class="input-group-text">
-                                                <input class="form-check-input mt-0" type="radio" name="correct_option" value="{{ $i }}">
+                                                <input class="form-check-input mt-0" type="radio" name="correct_option" value="{{ $i }}" {{ old('correct_option') == $i ? 'checked' : '' }}>
                                             </div>
                                             @if($i >= 2)
                                                 <button class="btn btn-danger" type="button" onclick="removeOption(this)">
@@ -82,14 +83,14 @@
 
                         <div class="mb-3 essay-options" style="display: none;">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="requires_manual_grading" name="requires_manual_grading" value="1" {{ old('requires_manual_grading', true) ? 'checked' : '' }}>
+                                <input class="form-check-input" type="checkbox" id="requires_manual_grading" name="requires_manual_grading" value="1" {{ old('requires_manual_grading', $question->requires_manual_grading) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="requires_manual_grading">
                                     {{ __('quiz.manual_grading') }}
                                 </label>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">{{ __('general.save') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('general.update') }}</button>
                         <a href="{{ route('admin.quizzes.show', $quiz) }}" class="btn btn-secondary">{{ __('general.cancel') }}</a>
                     </form>
                 </div>

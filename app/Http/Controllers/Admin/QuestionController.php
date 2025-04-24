@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -17,17 +18,31 @@ class QuestionController extends Controller
 
     public function store(Request $request, Quiz $quiz)
     {
-        $validated = $request->validate([
+        $rules = [
             'question' => 'required|string',
             'type' => 'required|in:multiple_choice,essay',
             'points' => 'required|integer|min:1',
             'requires_manual_grading' => 'boolean',
-            'options' => 'required_if:type,multiple_choice|array|min:2',
-            'options.*.option' => 'required_with:options|string',
-            'correct_option' => 'required_if:type,multiple_choice|integer'
-        ]);
+        ];
 
-        DB::transaction(function () use ($validated, $quiz) {
+        // Validasi dinamis berdasarkan type
+        if ($request->type === 'multiple_choice') {
+            $rules['options'] = 'required|array|min:2|max:10';
+            $rules['options.*.option'] = 'required|string|min:1';
+            $rules['correct_option'] = 'required|integer|min:0';
+        }
+
+        $validated = $request->validate($rules);
+
+        // Validasi tambahan untuk memastikan correct_option valid
+        if ($request->type === 'multiple_choice') {
+            $maxIndex = count($request->options) - 1;
+            if ($request->correct_option > $maxIndex) {
+                return back()->withInput()->withErrors(['correct_option' => 'Invalid correct option selected']);
+            }
+        }
+
+        DB::transaction(function () use ($validated, $quiz, $request) {
             $question = $quiz->questions()->create([
                 'question' => $validated['question'],
                 'type' => $validated['type'],
@@ -54,19 +69,34 @@ class QuestionController extends Controller
         return view('admin.questions.edit', compact('quiz', 'question'));
     }
 
+    // app/Http/Controllers/Admin/QuestionController.php
     public function update(Request $request, Quiz $quiz, Question $question)
     {
-        $validated = $request->validate([
+        $rules = [
             'question' => 'required|string',
             'type' => 'required|in:multiple_choice,essay',
             'points' => 'required|integer|min:1',
             'requires_manual_grading' => 'boolean',
-            'options' => 'required_if:type,multiple_choice|array|min:2',
-            'options.*.option' => 'required_with:options|string',
-            'correct_option' => 'required_if:type,multiple_choice|integer'
-        ]);
+        ];
 
-        DB::transaction(function () use ($validated, $question) {
+        // Validasi dinamis berdasarkan type
+        if ($request->type === 'multiple_choice') {
+            $rules['options'] = 'required|array|min:2|max:10';
+            $rules['options.*.option'] = 'required|string|min:1';
+            $rules['correct_option'] = 'required|integer|min:0';
+        }
+
+        $validated = $request->validate($rules);
+
+        // Validasi tambahan untuk memastikan correct_option valid
+        if ($request->type === 'multiple_choice') {
+            $maxIndex = count($request->options) - 1;
+            if ($request->correct_option > $maxIndex) {
+                return back()->withInput()->withErrors(['correct_option' => 'Invalid correct option selected']);
+            }
+        }
+
+        DB::transaction(function () use ($validated, $question, $request) {
             $question->update([
                 'question' => $validated['question'],
                 'type' => $validated['type'],

@@ -14,19 +14,37 @@ class QuizAttemptController extends Controller
 {
     public function index()
     {
-        // Quiz yang sedang aktif (sudah dimulai dan is_active true)
+        // Pertama, ambil semua attempt yang masih in_progress
+        $inProgressAttempts = QuizAttempt::where('user_id', auth()->id())
+            ->where('status', 'in_progress')
+            ->with('quiz')
+            ->get();
+
+        // Cek timeout untuk setiap attempt
+        foreach ($inProgressAttempts as $attempt) {
+            $endTime = $attempt->started_at->addMinutes($attempt->quiz->duration);
+            if (now()->gt($endTime)) {
+                $attempt->update([
+                    'status' => 'completed',
+                    'completed_at' => now()
+                ]);
+            }
+        }
+
+        // Refresh data setelah update
+        $inProgressAttempts = QuizAttempt::where('user_id', auth()->id())
+            ->where('status', 'in_progress')
+            ->with('quiz')
+            ->get();
+
+        // Quiz yang sedang aktif
         $activeQuizzes = Quiz::where('is_active', true)
             ->where('start_date', '<=', now())
             ->get();
 
-        // Quiz yang akan datang (belum dimulai tapi is_active true)
+        // Quiz yang akan datang
         $upcomingQuizzes = Quiz::where('is_active', true)
             ->where('start_date', '>', now())
-            ->orderBy('start_date', 'asc')
-            ->get();
-
-        // Semua quiz termasuk yang belum dimulai (untuk debugging)
-        $allActiveQuizzes = Quiz::where('is_active', true)
             ->orderBy('start_date', 'asc')
             ->get();
 
@@ -35,17 +53,34 @@ class QuizAttemptController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view('quizzes.index', compact('activeQuizzes', 'upcomingQuizzes', 'quizHistory'));
+        return view('quizzes.index', compact('activeQuizzes', 'upcomingQuizzes', 'quizHistory', 'inProgressAttempts'));
     }
 
     public function start(Quiz $quiz)
     {
-        // Check if user has already attempted this quiz
-        if ($quiz->single_attempt && $quiz->attempts()->where('user_id', auth()->id())->exists()) {
+        // Cek apakah user sudah memiliki attempt yang sedang berjalan untuk quiz APAPUN
+        $existingInProgressAttempt = QuizAttempt::where('user_id', auth()->id())
+            ->where('status', 'in_progress')
+            ->first();
+
+        if ($existingInProgressAttempt) {
             return redirect()->route('quiz.index')
-                ->with('error', __('quiz.already_attempted'));
+                ->with('error', __('quiz.must_complete_ongoing_quiz'));
         }
 
+        // Cek apakah quiz single attempt dan sudah pernah dikerjakan
+        if ($quiz->single_attempt) {
+            $existingAttempt = $quiz->attempts()
+                ->where('user_id', auth()->id())
+                ->exists();
+
+            if ($existingAttempt) {
+                return redirect()->route('quiz.index')
+                    ->with('error', __('quiz.already_attempted'));
+            }
+        }
+
+        // Buat attempt baru
         $attempt = QuizAttempt::create([
             'user_id' => auth()->id(),
             'quiz_id' => $quiz->id,

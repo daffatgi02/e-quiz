@@ -52,10 +52,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('quizzes/{quiz}/reset-attempt/{user}', [AdminQuizController::class, 'resetAttempt'])->name('quizzes.reset-attempt');
 });
 
-// User Quiz Routes
 Route::middleware(['auth'])->group(function () {
+    // Route untuk melihat daftar quiz
     Route::get('quiz', [QuizAttemptController::class, 'index'])->name('quiz.index');
-    Route::get('quiz/{quiz}/start', [QuizAttemptController::class, 'start'])->name('quiz.start');
+
+    // Route untuk memulai quiz - tambahkan middleware di sini
+    Route::get('quiz/{quiz}/start', [QuizAttemptController::class, 'start'])
+        ->name('quiz.start')
+        ->middleware('check_quiz_progress');
+
+    // Route lainnya tetap sama
     Route::get('quiz/{attempt}/take', [QuizAttemptController::class, 'take'])->name('quiz.take');
     Route::post('quiz/{attempt}/submit', [QuizAttemptController::class, 'submit'])->name('quiz.submit');
     Route::get('quiz/{attempt}/result', [QuizAttemptController::class, 'result'])->name('quiz.result');
