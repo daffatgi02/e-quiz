@@ -19,7 +19,7 @@
 
                         @foreach($questions as $index => $question)
                             <div class="question-card mb-4" data-question-id="{{ $question->id }}">
-                                <h6 class="mb-3">{{ __('quiz.question') }} {{ $index + 1 }}: {{ $question->question }}</h6>
+                                <h6 class="mb-3">{{ $index + 1 }}). {{ $question->question }}</h6>
 
                                 @if($question->type === 'multiple_choice')
                                     @foreach($question->options as $option)

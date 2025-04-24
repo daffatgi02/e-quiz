@@ -29,7 +29,7 @@
                     @foreach($attempt->quiz->questions as $index => $question)
                         <div class="card mb-3">
                             <div class="card-header">
-                                {{ __('quiz.question') }} {{ $index + 1 }}: {{ $question->question }}
+                                {{ $index + 1 }}). {{ $question->question }}
                                 @if($attempt->status === 'graded')
                                     <span class="float-end">
                                         {{ __('quiz.points') }}:
