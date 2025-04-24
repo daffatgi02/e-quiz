@@ -12,22 +12,31 @@ use Carbon\Carbon;
 
 class QuizAttemptController extends Controller
 {
-public function index()
-{
-    $activeQuizzes = Quiz::where('is_active', true)
-        ->where('start_date', '<=', now())
-        ->get();
+    public function index()
+    {
+        // Quiz yang sedang aktif (sudah dimulai dan is_active true)
+        $activeQuizzes = Quiz::where('is_active', true)
+            ->where('start_date', '<=', now())
+            ->get();
 
-    // Debugging - tambahkan ini untuk memeriksa
-    // dd($activeQuizzes->toArray(), now());
+        // Quiz yang akan datang (belum dimulai tapi is_active true)
+        $upcomingQuizzes = Quiz::where('is_active', true)
+            ->where('start_date', '>', now())
+            ->orderBy('start_date', 'asc')
+            ->get();
 
-    $quizHistory = QuizAttempt::where('user_id', auth()->id())
-        ->with('quiz')
-        ->latest()
-        ->paginate(10);
+        // Semua quiz termasuk yang belum dimulai (untuk debugging)
+        $allActiveQuizzes = Quiz::where('is_active', true)
+            ->orderBy('start_date', 'asc')
+            ->get();
 
-    return view('quizzes.index', compact('activeQuizzes', 'quizHistory'));
-}
+        $quizHistory = QuizAttempt::where('user_id', auth()->id())
+            ->with('quiz')
+            ->latest()
+            ->paginate(10);
+
+        return view('quizzes.index', compact('activeQuizzes', 'upcomingQuizzes', 'quizHistory'));
+    }
 
     public function start(Quiz $quiz)
     {

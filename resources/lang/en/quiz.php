@@ -64,4 +64,13 @@ return [
     'start_date' => 'Start Date',
     'single_attempt' => 'Single Attempt',
     'pending_grading' => 'Pending Grading',
+    'upcoming_quizzes' => 'Upcoming Quizzes',
+    'no_upcoming_quizzes' => 'No upcoming quizzes',
+    'closed' => 'Closed',
+    'starts_in' => 'Starts in',
+    'countdown' => 'Countdown',
+    'days' => 'Days',
+    'hours' => 'Hours',
+    'minutes' => 'Minutes',
+    'seconds' => 'Seconds',
 ];

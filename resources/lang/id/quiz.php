@@ -64,4 +64,13 @@ return [
     'start_date' => 'Tanggal Mulai',
     'single_attempt' => 'Sekali Percobaan',
     'pending_grading' => 'Menunggu Penilaian',
+    'upcoming_quizzes' => 'Kuis yang Akan Datang',
+    'no_upcoming_quizzes' => 'Tidak ada kuis yang akan datang',
+    'closed' => 'Tertutup',
+    'starts_in' => 'Dimulai dalam',
+    'countdown' => 'Hitung Mundur',
+    'days' => 'Hari',
+    'hours' => 'Jam',
+    'minutes' => 'Menit',
+    'seconds' => 'Detik',
 ];

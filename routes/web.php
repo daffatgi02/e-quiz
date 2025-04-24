@@ -10,8 +10,15 @@ use App\Http\Controllers\QuizAttemptController;
 use App\Http\Controllers\LanguageController;
 
 
+
 Route::get('/', function () {
-    return view('welcome');
+    if (Auth::check()) {
+        if (Auth::user()->is_admin) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('quiz.index');
+    }
+    return redirect()->route('login');
 });
 
 Auth::routes(['register' => false]);
