@@ -73,4 +73,9 @@ return [
     'hours' => 'Jam',
     'minutes' => 'Menit',
     'seconds' => 'Detik',
+    'attempt_detail' => 'Detail Percobaan',
+    'questions_answers' => 'Pertanyaan & Jawaban',
+    'user_answer' => 'Jawaban Pengguna',
+    'export_selected' => 'Ekspor yang Dipilih',
+    'select_all' => 'Pilih Semua',
 ];

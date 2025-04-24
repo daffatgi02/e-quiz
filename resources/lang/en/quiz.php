@@ -73,4 +73,9 @@ return [
     'hours' => 'Hours',
     'minutes' => 'Minutes',
     'seconds' => 'Seconds',
+    'attempt_detail' => 'Attempt Detail',
+    'questions_answers' => 'Questions & Answers',
+    'user_answer' => 'User Answer',
+    'export_selected' => 'Export Selected',
+    'select_all' => 'Select All',
 ];

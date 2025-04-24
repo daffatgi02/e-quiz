@@ -78,7 +78,8 @@ class QuizAttemptController extends Controller
         return view('quizzes.take', compact('attempt', 'quiz', 'questions', 'remainingSeconds'));
     }
 
-    public function submit(QuizAttempt $attempt, ?Request $request = null)
+    // app/Http/Controllers/QuizAttemptController.php
+    public function submit(QuizAttempt $attempt, Request $request)
     {
         if ($attempt->user_id !== auth()->id() || $attempt->status !== 'in_progress') {
             return redirect()->route('quiz.index')
@@ -101,23 +102,29 @@ class QuizAttemptController extends Controller
                         $selectedOption = $question->options()->find($answer);
                         if ($selectedOption) {
                             $userAnswer['question_option_id'] = $selectedOption->id;
+                            // Perbaikan di sini - seharusnya memeriksa apakah jawaban benar
                             $userAnswer['points_earned'] = $selectedOption->is_correct ? $question->points : 0;
                             $userAnswer['is_graded'] = true;
                         }
                     } else {
                         $userAnswer['essay_answer'] = $answer;
                         $userAnswer['is_graded'] = !$question->requires_manual_grading;
+                        // Untuk essay yang tidak perlu dinilai manual, beri nilai penuh
+                        if (!$question->requires_manual_grading) {
+                            $userAnswer['points_earned'] = $question->points;
+                        }
                     }
 
                     UserAnswer::create($userAnswer);
                 }
             }
 
-            // Calculate score for auto-graded questions
+            // Hitung total skor untuk jawaban yang sudah dinilai
             $totalPoints = $attempt->answers()
                 ->where('is_graded', true)
                 ->sum('points_earned');
 
+            // Update attempt dengan skor total
             $attempt->update([
                 'completed_at' => now(),
                 'status' => $attempt->answers()->where('is_graded', false)->exists() ? 'completed' : 'graded',

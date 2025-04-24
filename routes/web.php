@@ -9,8 +9,6 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\QuizAttemptController;
 use App\Http\Controllers\LanguageController;
 
-
-
 Route::get('/', function () {
     if (Auth::check()) {
         if (Auth::user()->is_admin) {
@@ -43,10 +41,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Reports
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/quiz/{quiz}', [ReportController::class, 'quizReport'])->name('reports.quiz');
-    Route::get('reports/user/{user}', [ReportController::class, 'userReport'])->name('reports.user');
-    Route::get('reports/pending-grading', [ReportController::class, 'pendingGrading'])->name('reports.pending-grading');
-    Route::post('reports/grade/{answer}', [ReportController::class, 'gradeAnswer'])->name('reports.grade');
+    Route::get('reports/attempt/{attempt}', [ReportController::class, 'attemptDetail'])->name('reports.attempt.detail');
     Route::get('reports/export/quiz/{quiz}', [ReportController::class, 'exportQuizResults'])->name('reports.export.quiz');
+    Route::get('reports/export/attempt/{attempt}', [ReportController::class, 'exportSingleAttempt'])->name('reports.export.attempt');
+
+    // Fix route bulk export - seharusnya di dalam group admin dan dengan parameter quiz
+    Route::post('reports/export/bulk/{quiz}', [ReportController::class, 'exportBulk'])->name('reports.export.bulk');
+
+    // Reset attempt route
+    Route::post('quizzes/{quiz}/reset-attempt/{user}', [AdminQuizController::class, 'resetAttempt'])->name('quizzes.reset-attempt');
 });
 
 // User Quiz Routes

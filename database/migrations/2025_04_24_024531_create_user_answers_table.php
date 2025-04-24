@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('question_id')->constrained()->onDelete('cascade');
             $table->foreignId('question_option_id')->nullable()->constrained()->onDelete('cascade');
             $table->text('essay_answer')->nullable();
-            $table->decimal('points_earned', 5, 2)->nullable();
+            $table->decimal('points_earned', 8, 2)->nullable(); // Pastikan tipe data cukup
             $table->boolean('is_graded')->default(false);
             $table->timestamps();
         });

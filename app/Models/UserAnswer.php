@@ -20,6 +20,7 @@ class UserAnswer extends Model
 
     protected $casts = [
         'is_graded' => 'boolean',
+        'points_earned' => 'decimal:2',
     ];
 
     public function quizAttempt()

@@ -14,41 +14,47 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $statistics = [
-            'total_quizzes' => Quiz::count(),
-            'total_users' => User::where('is_admin', false)->count(),
-            'total_attempts' => QuizAttempt::count(),
-            'average_score' => QuizAttempt::where('status', 'graded')->avg('score'),
-            'pending_grading' => UserAnswer::where('is_graded', false)->count(),
-        ];
-
-        $recentAttempts = QuizAttempt::with(['user', 'quiz'])
+        $quizzes = Quiz::withCount('attempts')
+            ->with(['attempts' => function($query) {
+                $query->select('quiz_id')
+                    ->selectRaw('COUNT(*) as total')
+                    ->selectRaw('AVG(score) as average_score')
+                    ->selectRaw('MAX(score) as highest_score')
+                    ->selectRaw('MIN(score) as lowest_score')
+                    ->where('status', 'graded')
+                    ->groupBy('quiz_id');
+            }])
             ->latest()
-            ->take(10)
-            ->get();
+            ->paginate(10);
 
-        return view('admin.reports.index', compact('statistics', 'recentAttempts'));
+        return view('admin.reports.index', compact('quizzes'));
     }
 
     public function quizReport(Quiz $quiz)
     {
         $attempts = $quiz->attempts()
-            ->with('user')
+            ->with(['user', 'answers.question'])
             ->orderBy('score', 'desc')
             ->get();
+
+        $passingScore = 70;
 
         $statistics = [
             'total_attempts' => $attempts->count(),
             'completed' => $attempts->where('status', 'completed')->count(),
             'graded' => $attempts->where('status', 'graded')->count(),
-            'average_score' => $attempts->where('status', 'graded')->avg('score'),
+            'average_score' => round($attempts->where('status', 'graded')->avg('score'), 2),
             'highest_score' => $attempts->where('status', 'graded')->max('score'),
             'lowest_score' => $attempts->where('status', 'graded')->min('score'),
+            'passed' => $attempts->where('status', 'graded')->where('score', '>=', $passingScore)->count(),
+            'failed' => $attempts->where('status', 'graded')->where('score', '<', $passingScore)->count(),
+            'passing_rate' => $attempts->where('status', 'graded')->count() > 0
+                ? round(($attempts->where('status', 'graded')->where('score', '>=', $passingScore)->count() / $attempts->where('status', 'graded')->count()) * 100, 2)
+                : 0
         ];
 
-        return view('admin.reports.quiz', compact('quiz', 'attempts', 'statistics'));
+        return view('admin.reports.quiz', compact('quiz', 'attempts', 'statistics', 'passingScore'));
     }
-
     public function userReport(User $user)
     {
         $attempts = $user->quizAttempts()
@@ -119,7 +125,7 @@ class ReportController extends Controller
 
         $columns = ['User', 'NIK', 'Department', 'Position', 'Started At', 'Completed At', 'Score', 'Status'];
 
-        $callback = function() use ($attempts, $columns) {
+        $callback = function () use ($attempts, $columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
@@ -137,7 +143,34 @@ class ReportController extends Controller
             }
             fclose($file);
         };
-
+        return Excel::download(new QuizResultsExport($quiz), 'quiz_' . $quiz->id . '_results.xlsx');
         return response()->stream($callback, 200, $headers);
+    }
+    public function attemptDetail(QuizAttempt $attempt)
+    {
+        $attempt->load(['quiz', 'user', 'answers.question.options', 'answers.questionOption']);
+        return view('admin.reports.attempt-detail', compact('attempt'));
+    }
+    public function exportSingleAttempt(QuizAttempt $attempt)
+    {
+        $attempt->load(['quiz', 'user', 'answers.question.options', 'answers.questionOption']);
+        return Excel::download(
+            new QuizResultsExport($attempt->quiz, collect([$attempt])),
+            'quiz_' . $attempt->quiz->id . '_user_' . $attempt->user->id . '_result.xlsx'
+        );
+    }
+
+    public function exportBulk(Request $request, Quiz $quiz)
+    {
+        $attemptIds = $request->input('attempt_ids', []);
+        $attempts = $quiz->attempts()
+            ->whereIn('id', $attemptIds)
+            ->with(['user', 'answers.question.options', 'answers.questionOption'])
+            ->get();
+
+        return Excel::download(
+            new QuizResultsExport($quiz, $attempts),
+            'quiz_' . $quiz->id . '_bulk_results.xlsx'
+        );
     }
 }

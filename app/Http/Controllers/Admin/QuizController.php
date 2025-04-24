@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use Illuminate\Http\Request;
 
 class QuizController extends Controller
@@ -70,5 +71,14 @@ class QuizController extends Controller
     {
         $quiz->load('questions.options');
         return view('admin.quizzes.show', compact('quiz'));
+    }
+    public function resetAttempt(Quiz $quiz, User $user)
+    {
+        QuizAttempt::where('quiz_id', $quiz->id)
+            ->where('user_id', $user->id)
+            ->delete();
+
+        return redirect()->back()
+            ->with('success', __('quiz.attempt_reset_success'));
     }
 }
