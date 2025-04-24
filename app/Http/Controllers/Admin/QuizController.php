@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -64,5 +65,10 @@ class QuizController extends Controller
         $quiz->delete();
         return redirect()->route('admin.quizzes.index')
             ->with('success', __('quiz.delete_success'));
+    }
+    public function show(Quiz $quiz)
+    {
+        $quiz->load('questions.options');
+        return view('admin.quizzes.show', compact('quiz'));
     }
 }

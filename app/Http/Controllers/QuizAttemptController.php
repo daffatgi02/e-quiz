@@ -7,23 +7,27 @@ use App\Models\QuizAttempt;
 use App\Models\UserAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class QuizAttemptController extends Controller
 {
-    public function index()
-    {
-        $activeQuizzes = Quiz::where('is_active', true)
-            ->where('start_date', '<=', now())
-            ->get();
+public function index()
+{
+    $activeQuizzes = Quiz::where('is_active', true)
+        ->where('start_date', '<=', now())
+        ->get();
 
-        $quizHistory = QuizAttempt::where('user_id', auth()->id())
-            ->with('quiz')
-            ->latest()
-            ->paginate(10);
+    // Debugging - tambahkan ini untuk memeriksa
+    // dd($activeQuizzes->toArray(), now());
 
-        return view('quizzes.index', compact('activeQuizzes', 'quizHistory'));
-    }
+    $quizHistory = QuizAttempt::where('user_id', auth()->id())
+        ->with('quiz')
+        ->latest()
+        ->paginate(10);
+
+    return view('quizzes.index', compact('activeQuizzes', 'quizHistory'));
+}
 
     public function start(Quiz $quiz)
     {

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -47,5 +48,21 @@ class CreateLanguageFiles extends Command
         } else {
             return "<?php\n\nreturn [\n    'welcome' => 'Selamat Datang',\n    'dashboard' => 'Dasbor',\n    'users' => 'Pengguna',\n    'logout' => 'Keluar',\n    'login' => 'Masuk',\n    'save' => 'Simpan',\n    'cancel' => 'Batal',\n    'edit' => 'Edit',\n    'delete' => 'Hapus',\n    'view' => 'Lihat',\n    'create' => 'Buat',\n    'update' => 'Perbarui',\n    'search' => 'Cari',\n    'filter' => 'Filter',\n    'back' => 'Kembali',\n    'next' => 'Berikutnya',\n    'previous' => 'Sebelumnya',\n    'confirm' => 'Konfirmasi',\n    'success' => 'Berhasil',\n    'error' => 'Kesalahan',\n    'warning' => 'Peringatan',\n    'info' => 'Informasi',\n    'yes' => 'Ya',\n    'no' => 'Tidak',\n    'actions' => 'Aksi',\n    'status' => 'Status',\n    'active' => 'Aktif',\n    'inactive' => 'Tidak Aktif',\n    'name' => 'Nama',\n    'nik' => 'NIK',\n    'position' => 'Posisi',\n    'department' => 'Departemen',\n    'language' => 'Bahasa',\n    'english' => 'Inggris',\n    'indonesian' => 'Indonesia',\n    'admin' => 'Admin',\n    'user' => 'Pengguna',\n    'profile' => 'Profil',\n    'settings' => 'Pengaturan',\n    'reports' => 'Laporan',\n    'download' => 'Unduh',\n    'export' => 'Ekspor',\n    'import' => 'Impor',\n    'print' => 'Cetak',\n    'total' => 'Total',\n    'average' => 'Rata-rata',\n    'minimum' => 'Minimum',\n    'maximum' => 'Maksimum',\n    'statistics' => 'Statistik',\n    'date' => 'Tanggal',\n    'time' => 'Waktu',\n    'details' => 'Detail',\n    'description' => 'Deskripsi',\n    'type' => 'Tipe',\n    'email' => 'Email',\n    'password' => 'Kata Sandi',\n    'confirm_password' => 'Konfirmasi Kata Sandi',\n    'remember_me' => 'Ingat Saya',\n    'forgot_password' => 'Lupa Kata Sandi?',\n    'reset_password' => 'Reset Kata Sandi',\n];";
         }
+    }
+    // app/Http/Controllers/LanguageController.php
+    public function switchLang($lang)
+    {
+        if (array_key_exists($lang, config('app.languages'))) {
+            Session::put('applocale', $lang);
+            App::setLocale($lang);
+
+            if (auth()->check()) {
+                /** @var \App\Models\User $user */
+                $user = auth()->user();
+                $user->language = $lang;
+                $user->save();
+            }
+        }
+        return redirect()->back();
     }
 }
