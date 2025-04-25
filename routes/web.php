@@ -51,6 +51,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('quizzes/{quiz}/track', [AdminQuizController::class, 'track'])->name('quizzes.track');
     // Reset attempt route
     Route::post('quizzes/{quiz}/reset-attempt/{user}', [AdminQuizController::class, 'resetAttempt'])->name('quizzes.reset-attempt');
+    // Token Management
+    Route::post('users/{user}/generate-token', [App\Http\Controllers\Admin\TokenController::class, 'generateToken'])->name('tokens.generate');
+    Route::post('users/{user}/reset-pin', [App\Http\Controllers\Admin\TokenController::class, 'resetPin'])->name('tokens.reset-pin');
+    Route::get('tokens/download', [App\Http\Controllers\Admin\TokenController::class, 'downloadTokens'])->name('tokens.download');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -67,4 +71,24 @@ Route::middleware(['auth'])->group(function () {
     Route::post('quiz/{attempt}/submit', [QuizAttemptController::class, 'submit'])->name('quiz.submit');
     Route::get('quiz/{attempt}/result', [QuizAttemptController::class, 'result'])->name('quiz.result');
     Route::post('quiz/save-answer', [QuizAttemptController::class, 'saveAnswer'])->name('quiz.save-answer');
+});
+
+// Admin Login Routes - khusus untuk admin
+Route::middleware('guest')->group(function () {
+    // Token login routes
+    Route::get('/', function () {
+        return redirect()->route('token.login');
+    });
+    Route::get('token-login', [App\Http\Controllers\Auth\TokenLoginController::class, 'showLoginForm'])->name('token.login');
+    Route::post('token-login', [App\Http\Controllers\Auth\TokenLoginController::class, 'login']);
+
+    // PIN routes
+    Route::get('set-pin', [App\Http\Controllers\Auth\TokenLoginController::class, 'showSetPinForm'])->name('token.set-pin');
+    Route::post('set-pin', [App\Http\Controllers\Auth\TokenLoginController::class, 'setPin']);
+    Route::get('verify-pin', [App\Http\Controllers\Auth\TokenLoginController::class, 'showVerifyPinForm'])->name('token.verify-pin');
+    Route::post('verify-pin', [App\Http\Controllers\Auth\TokenLoginController::class, 'verifyPin']);
+
+    // Admin login
+    Route::get('admin-login', [App\Http\Controllers\Auth\LoginController::class, 'showAdminLoginForm'])->name('admin.login');
+    Route::post('admin-login', [App\Http\Controllers\Auth\LoginController::class, 'adminLogin'])->name('admin.login.submit');
 });

@@ -1,5 +1,5 @@
 <?php
-// database/seeders/AdminUserSeeder.php
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -19,6 +19,10 @@ class AdminUserSeeder extends Seeder
             'department' => 'IT',
             'is_admin' => true,
             'is_active' => true,
+            // Tidak perlu token dan pin untuk admin
+            'login_token' => null,
+            'pin' => null,
+            'pin_set' => false,
         ]);
     }
 }
