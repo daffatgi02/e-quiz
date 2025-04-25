@@ -47,6 +47,9 @@
                                             <a href="{{ route('admin.quizzes.edit', $quiz) }}" class="btn btn-sm btn-warning">
                                                 {{ __('general.edit') }}
                                             </a>
+                                            <a href="{{ route('admin.quizzes.track', $quiz) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-chart-bar"></i> {{ __('quiz.track') }}
+                                            </a>
                                             <form action="{{ route('admin.quizzes.destroy', $quiz) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')

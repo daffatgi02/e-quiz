@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Quiz;
+use App\Models\User;
 use App\Models\QuizAttempt;
 use Illuminate\Http\Request;
 
@@ -80,5 +81,22 @@ class QuizController extends Controller
 
         return redirect()->back()
             ->with('success', __('quiz.attempt_reset_success'));
+    }
+    public function track(Quiz $quiz)
+    {
+        // Hanya ambil attempts yang sudah ada
+        $attempts = QuizAttempt::where('quiz_id', $quiz->id)
+            ->with('user')
+            ->orderBy('started_at', 'desc')
+            ->paginate(20);
+
+        $statistics = [
+            'in_progress' => $quiz->attempts()->where('status', 'in_progress')->count(),
+            'completed' => $quiz->attempts()->where('status', 'completed')->count(),
+            'graded' => $quiz->attempts()->where('status', 'graded')->count(),
+            'total_participants' => $quiz->attempts()->count(),
+        ];
+
+        return view('admin.quizzes.track', compact('quiz', 'attempts', 'statistics'));
     }
 }

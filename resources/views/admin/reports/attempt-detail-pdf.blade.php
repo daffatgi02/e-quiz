@@ -133,11 +133,11 @@
                     @if($userAnswer && $userAnswer->question_option_id == $option->id)
                         @if($option->is_correct)
                             <div class="user-selected-correct">
-                                ✓ {{ $option->option }} ({{ __('quiz.user_answer') }} - {{ __('quiz.correct') }})
+                                ✅ {{ $option->option }} ({{ __('quiz.user_answer') }} - {{ __('quiz.correct') }})
                             </div>
                         @else
                             <div class="user-selected-wrong">
-                                ✗ {{ $option->option }} ({{ __('quiz.user_answer') }} - {{ __('quiz.incorrect') }})
+                                ❌ {{ $option->option }} ({{ __('quiz.user_answer') }} - {{ __('quiz.incorrect') }})
                             </div>
                         @endif
                     @elseif($option->is_correct)

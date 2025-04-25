@@ -77,4 +77,5 @@ return [
     'history' => 'Riwayat',
     'role' => 'Role',
     'select_all' => 'Pilih Semua',
+    'clear' => 'batalkan',
 ];

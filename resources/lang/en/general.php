@@ -77,4 +77,5 @@ return [
     'history' => 'History',
     'role' => 'Peran',
     'select_all' => 'Select All',
+    'clear' => 'Clear',
 ];
