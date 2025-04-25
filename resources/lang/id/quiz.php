@@ -75,7 +75,7 @@ return [
     'seconds' => 'Detik',
     'attempt_detail' => 'Detail Percobaan',
     'questions_answers' => 'Pertanyaan & Jawaban',
-    'user_answer' => 'Jawaban Pengguna',
+    'user_answer' => 'Jawaban Peserta',
     'export_selected' => 'Ekspor yang Dipilih',
     'select_all' => 'Pilih Semua',
     'in_progress_alert' => 'Quiz Sedang Dikerjakan',

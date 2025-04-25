@@ -119,9 +119,9 @@
                                                     @if ($userAnswer && $userAnswer->question_option_id == $option->id)
                                                         @if (!$option->is_correct)
                                                             <i class="fas fa-times-circle text-danger ms-2"></i>
-                                                            <span class="badge bg-danger ms-2">Jawaban Anda (Salah)</span>
+                                                            <span class="badge bg-danger ms-2">Jawaban Peserta (Salah)</span>
                                                         @else
-                                                            <span class="badge bg-primary ms-2">Jawaban Anda (Benar)</span>
+                                                            <span class="badge bg-primary ms-2"></span>
                                                         @endif
                                                     @endif
                                                 </label>

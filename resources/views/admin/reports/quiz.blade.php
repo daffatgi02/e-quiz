@@ -25,7 +25,7 @@
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h6>{{ __('general.total') }} {{ __('quiz.attempts') }}</h6>
+                            <h6>Total Peserta</h6>
                             <h3>{{ $statistics['total_attempts'] }}</h3>
                         </div>
                     </div>
@@ -60,7 +60,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">{{ __('quiz.attempts') }}</h5>
+                        <h5 class="mb-0">Hasil Laporan</h5>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="select-all">
                             <label class="form-check-label" for="select-all">
