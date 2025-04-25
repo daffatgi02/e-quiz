@@ -74,4 +74,7 @@ return [
     'user_deleted' => 'User deleted successfully',
     'status_updated' => 'Status updated successfully',
     'cannot_delete_self' => 'You cannot delete your own account',
+    'history' => 'History',
+    'role' => 'Peran',
+    'select_all' => 'Select All',
 ];

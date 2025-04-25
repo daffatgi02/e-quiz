@@ -29,7 +29,8 @@ Route::get('language/{lang}', [LanguageController::class, 'switchLang'])->name('
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [ReportController::class, 'index'])->name('dashboard');
-
+    // History per user
+    Route::get('users/{user}/history', [AdminUserController::class, 'history'])->name('users.history');
     // Quiz Management
     Route::resource('quizzes', AdminQuizController::class);
     Route::resource('quizzes.questions', AdminQuestionController::class);

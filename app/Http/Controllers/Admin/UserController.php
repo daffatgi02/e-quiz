@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -86,5 +87,23 @@ class UserController extends Controller
         $user->update(['is_active' => !$user->is_active]);
         return redirect()->back()
             ->with('success', __('general.status_updated'));
+    }
+    public function history(User $user)
+    {
+        // Ambil semua attempt dari user
+        $attempts = $user->quizAttempts()
+            ->with('quiz')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        // Hitung statistik
+        $statistics = [
+            'total_attempts' => $user->quizAttempts()->count(),
+            'completed' => $user->quizAttempts()->where('status', 'completed')->count(),
+            'graded' => $user->quizAttempts()->where('status', 'graded')->count(),
+            'average_score' => $user->quizAttempts()->where('status', 'graded')->avg('score') ?? 0,
+        ];
+
+        return view('admin.users.history', compact('user', 'attempts', 'statistics'));
     }
 }

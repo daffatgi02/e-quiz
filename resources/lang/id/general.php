@@ -74,4 +74,7 @@ return [
     'user_deleted' => 'Peserta berhasil dihapus',
     'status_updated' => 'Status berhasil diperbarui',
     'cannot_delete_self' => 'Anda tidak dapat menghapus akun Anda sendiri',
+    'history' => 'Riwayat',
+    'role' => 'Role',
+    'select_all' => 'Pilih Semua',
 ];

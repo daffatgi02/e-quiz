@@ -45,6 +45,11 @@
                                     </td>
                                     <td>
                                         <div class="btn-group">
+                                            @if(!$user->is_admin)
+                                                <a href="{{ route('admin.users.history', $user) }}" class="btn btn-sm btn-info">
+                                                    {{ __('general.history') }}
+                                                </a>
+                                            @endif
                                             <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-warning">
                                                 {{ __('general.edit') }}
                                             </a>

@@ -77,7 +77,6 @@ return [
     'questions_answers' => 'Pertanyaan & Jawaban',
     'user_answer' => 'Jawaban Peserta',
     'export_selected' => 'Ekspor yang Dipilih',
-    'select_all' => 'Pilih Semua',
     'in_progress_alert' => 'Quiz Sedang Dikerjakan',
     'you_have_quiz_in_progress' => 'Anda memiliki quiz yang belum selesai',
     'continue_quiz' => 'Lanjutkan Quiz',

@@ -77,7 +77,6 @@ return [
     'questions_answers' => 'Questions & Answers',
     'user_answer' => 'User Answer',
     'export_selected' => 'Export Selected',
-    'select_all' => 'Select All',
     'in_progress_alert' => 'Quiz in Progress',
     'you_have_quiz_in_progress' => 'You have an incomplete quiz',
     'continue_quiz' => 'Continue Quiz',
