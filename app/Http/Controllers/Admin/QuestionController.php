@@ -8,6 +8,7 @@ use App\Models\Quiz;
 use App\Models\QuestionOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class QuestionController extends Controller
 {
@@ -20,31 +21,31 @@ class QuestionController extends Controller
     {
         $rules = [
             'question' => 'required|string',
+            'question_image' => 'nullable|image|max:2048', // Max 2MB
             'type' => 'required|in:multiple_choice,essay',
             'points' => 'required|integer|min:1',
             'requires_manual_grading' => 'boolean',
         ];
 
-        // Validasi dinamis berdasarkan type
         if ($request->type === 'multiple_choice') {
             $rules['options'] = 'required|array|min:2|max:10';
             $rules['options.*.option'] = 'required|string|min:1';
+            $rules['options.*.image'] = 'nullable|image|max:1024'; // Max 1MB
             $rules['correct_option'] = 'required|integer|min:0';
         }
 
         $validated = $request->validate($rules);
 
-        // Validasi tambahan untuk memastikan correct_option valid
-        if ($request->type === 'multiple_choice') {
-            $maxIndex = count($request->options) - 1;
-            if ($request->correct_option > $maxIndex) {
-                return back()->withInput()->withErrors(['correct_option' => 'Invalid correct option selected']);
-            }
-        }
-
         DB::transaction(function () use ($validated, $quiz, $request) {
+            // Handle question image upload
+            $questionImagePath = null;
+            if ($request->hasFile('question_image')) {
+                $questionImagePath = $request->file('question_image')->store('questions', 'public');
+            }
+
             $question = $quiz->questions()->create([
                 'question' => $validated['question'],
+                'image_path' => $questionImagePath,
                 'type' => $validated['type'],
                 'points' => $validated['points'],
                 'requires_manual_grading' => $validated['requires_manual_grading'] ?? false,
@@ -52,9 +53,17 @@ class QuestionController extends Controller
 
             if ($validated['type'] === 'multiple_choice' && isset($validated['options'])) {
                 foreach ($validated['options'] as $index => $option) {
+                    // Handle option image upload
+                    $optionImagePath = null;
+                    if (isset($option['image']) && $request->hasFile("options.{$index}.image")) {
+                        $optionImagePath = $request->file("options.{$index}.image")->store('options', 'public');
+                    }
+
                     $question->options()->create([
                         'option' => $option['option'],
-                        'is_correct' => $index === (int)$validated['correct_option']
+                        'image_path' => $optionImagePath,
+                        'is_correct' => $index === (int)$validated['correct_option'],
+                        'order' => $index
                     ]);
                 }
             }

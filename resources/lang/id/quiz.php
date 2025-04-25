@@ -93,4 +93,6 @@ return [
     'not_graded' => 'Belum Dinilai',
     'incorrect' => 'Salah',
     'correct' => 'Benar',
+    'question_image' => 'Gambar Pertanyaan',
+    'drag_to_reorder' => 'Seret untuk mengatur ulang opsi',
 ];

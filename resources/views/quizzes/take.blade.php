@@ -21,14 +21,25 @@
                                 <div class="question-card mb-4" data-question-id="{{ $question->id }}">
                                     <h6 class="mb-3">{{ $index + 1 }}). {{ $question->question }}</h6>
 
+                                    @if($question->image_path)
+                                        <div class="question-image mb-3">
+                                            <img src="{{ Storage::url($question->image_path) }}" class="img-fluid" alt="Question Image" style="max-height: 300px; object-fit: contain;">
+                                        </div>
+                                    @endif
+
                                     @if ($question->type === 'multiple_choice')
-                                        @foreach ($question->options as $option)
+                                        @foreach ($question->options->sortBy('order') as $option)
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="radio"
                                                     name="answers[{{ $question->id }}]" id="option-{{ $option->id }}"
                                                     value="{{ $option->id }}">
                                                 <label class="form-check-label" for="option-{{ $option->id }}">
                                                     {{ $option->option }}
+                                                    @if($option->image_path)
+                                                        <div class="option-image mt-2">
+                                                            <img src="{{ Storage::url($option->image_path) }}" class="img-fluid" alt="Option Image" style="max-height: 150px; object-fit: contain;">
+                                                        </div>
+                                                    @endif
                                                 </label>
                                             </div>
                                         @endforeach
@@ -38,11 +49,10 @@
                                     @endif
                                 </div>
                             @endforeach
+
                             <div class="progress mb-4">
                                 <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
                                     role="progressbar" style="width: 0%" id="quiz-progress">0%</div>
-                                <div class="progress-bar" role="progressbar" style="width: 0%" id="quiz-progress">0%
-                                </div>
                             </div>
 
                             <div class="d-flex justify-content-between">
@@ -100,6 +110,7 @@
             updateProgress();
         </script>
     @endpush
+
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {

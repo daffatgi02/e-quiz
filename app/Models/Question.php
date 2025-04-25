@@ -13,6 +13,7 @@ class Question extends Model
         'quiz_id',
         'question',
         'type',
+        'image_path',
         'requires_manual_grading',
         'points'
     ];

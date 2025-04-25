@@ -93,4 +93,6 @@ return [
     'not_graded' => 'Not Graded',
     'incorrect' => 'Incorrect',
     'correct' => 'Correct',
+    'question_image' => 'Question Image',
+    'drag_to_reorder' => 'Drag to reorder options',
 ];
