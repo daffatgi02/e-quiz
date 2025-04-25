@@ -9,11 +9,27 @@
                 <h1>{{ __('quiz.report') }}: {{ $quiz->title }}</h1>
                 <div>
                     <button id="bulk-export" class="btn btn-success" disabled>
-                        <i class="fas fa-file-excel"></i> {{ __('general.export') }} Selected
+                        <i class="fas fa-file-pdf"></i> {{ __('quiz.export_selected') }}
                     </button>
-                    <a href="{{ route('admin.reports.export.quiz', $quiz) }}" class="btn btn-primary">
-                        <i class="fas fa-file-excel"></i> {{ __('general.export') }} All
-                    </a>
+
+                    <div class="dropdown d-inline-block">
+                        <button class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-file-pdf"></i> {{ __('general.export') }} All
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.reports.export.quiz', ['quiz' => $quiz, 'lang' => 'id']) }}">
+                                    🇮🇩 Bahasa Indonesia
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.reports.export.quiz', ['quiz' => $quiz, 'lang' => 'en']) }}">
+                                    🇺🇸 English
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
                     <a href="{{ route('admin.reports.index') }}" class="btn btn-secondary">
                         {{ __('general.back') }}
                     </a>
@@ -72,6 +88,7 @@
                 <div class="card-body">
                     <form id="bulk-export-form" action="{{ route('admin.reports.export.bulk', $quiz) }}" method="POST">
                         @csrf
+                        <input type="hidden" name="lang" id="bulk-export-lang" value="id">
                         <table class="table">
                             <thead>
                                 <tr>
@@ -118,9 +135,24 @@
                                             <a href="{{ route('admin.reports.attempt.detail', $attempt) }}" class="btn btn-sm btn-info">
                                                 <i class="fas fa-eye"></i> {{ __('general.view') }}
                                             </a>
-                                            <a href="{{ route('admin.reports.export.attempt', $attempt) }}" class="btn btn-sm btn-success">
-                                                <i class="fas fa-file-excel"></i> {{ __('general.export') }}
-                                            </a>
+
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-file-pdf"></i> Export
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('admin.reports.export.attempt', ['attempt' => $attempt, 'lang' => 'id']) }}">
+                                                            🇮🇩 Bahasa Indonesia
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('admin.reports.export.attempt', ['attempt' => $attempt, 'lang' => 'en']) }}">
+                                                            🇺🇸 English
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -159,9 +191,38 @@ document.addEventListener('DOMContentLoaded', function() {
         bulkExportButton.disabled = checkedCount === 0;
     }
 
-    // Bulk export
+    // Bulk export with language selection
     bulkExportButton.addEventListener('click', function() {
-        bulkExportForm.submit();
+        const dropdown = document.createElement('div');
+        dropdown.className = 'dropdown d-inline-block position-absolute';
+        dropdown.style.top = this.offsetTop + this.offsetHeight + 'px';
+        dropdown.style.left = this.offsetLeft + 'px';
+        dropdown.innerHTML = `
+            <ul class="dropdown-menu show">
+                <li><a class="dropdown-item" href="#" data-lang="id">🇮🇩 Bahasa Indonesia</a></li>
+                <li><a class="dropdown-item" href="#" data-lang="en">🇺🇸 English</a></li>
+            </ul>
+        `;
+
+        document.body.appendChild(dropdown);
+
+        dropdown.addEventListener('click', function(e) {
+            if (e.target.matches('.dropdown-item')) {
+                e.preventDefault();
+                document.getElementById('bulk-export-lang').value = e.target.dataset.lang;
+                bulkExportForm.submit();
+                document.body.removeChild(dropdown);
+            }
+        });
+
+        setTimeout(() => {
+            document.addEventListener('click', function removeDropdown(e) {
+                if (!dropdown.contains(e.target)) {
+                    document.body.removeChild(dropdown);
+                    document.removeEventListener('click', removeDropdown);
+                }
+            });
+        }, 0);
     });
 });
 </script>

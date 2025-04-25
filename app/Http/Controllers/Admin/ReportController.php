@@ -9,13 +9,14 @@ use App\Models\User;
 use App\Models\UserAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
     public function index()
     {
         $quizzes = Quiz::withCount('attempts')
-            ->with(['attempts' => function($query) {
+            ->with(['attempts' => function ($query) {
                 $query->select('quiz_id')
                     ->selectRaw('COUNT(*) as total')
                     ->selectRaw('AVG(score) as average_score')
@@ -109,56 +110,45 @@ class ReportController extends Controller
             ->with('success', __('quiz.answer_graded'));
     }
 
-    public function exportQuizResults(Quiz $quiz)
+    public function exportQuizResults(Request $request, Quiz $quiz)
     {
+        $lang = $request->get('lang', 'id'); // Default ke bahasa Indonesia
+        app()->setLocale($lang);
+
         $attempts = $quiz->attempts()
-            ->with(['user', 'answers.question'])
+            ->with(['user', 'answers.question.options', 'answers.questionOption'])
             ->get();
 
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=quiz_results_{$quiz->id}.csv",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
+        $pdf = PDF::loadView('admin.reports.quiz-results-pdf', [
+            'quiz' => $quiz,
+            'attempts' => $attempts,
+            'lang' => $lang
+        ]);
 
-        $columns = ['User', 'NIK', 'Department', 'Position', 'Started At', 'Completed At', 'Score', 'Status'];
-
-        $callback = function () use ($attempts, $columns) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
-
-            foreach ($attempts as $attempt) {
-                fputcsv($file, [
-                    $attempt->user->name,
-                    $attempt->user->nik,
-                    $attempt->user->department,
-                    $attempt->user->position,
-                    $attempt->started_at->format('Y-m-d H:i:s'),
-                    $attempt->completed_at?->format('Y-m-d H:i:s'),
-                    $attempt->score,
-                    $attempt->status
-                ]);
-            }
-            fclose($file);
-        };
-        return Excel::download(new QuizResultsExport($quiz), 'quiz_' . $quiz->id . '_results.xlsx');
-        return response()->stream($callback, 200, $headers);
+        return $pdf->download('quiz_' . $quiz->id . '_results_' . $lang . '.pdf');
     }
+
+
     public function attemptDetail(QuizAttempt $attempt)
     {
         $attempt->load(['quiz', 'user', 'answers.question.options', 'answers.questionOption']);
         return view('admin.reports.attempt-detail', compact('attempt'));
     }
-    public function exportSingleAttempt(QuizAttempt $attempt)
+    public function exportSingleAttempt(Request $request, QuizAttempt $attempt)
     {
+        $lang = $request->get('lang', 'id');
+        app()->setLocale($lang);
+
         $attempt->load(['quiz', 'user', 'answers.question.options', 'answers.questionOption']);
-        return Excel::download(
-            new QuizResultsExport($attempt->quiz, collect([$attempt])),
-            'quiz_' . $attempt->quiz->id . '_user_' . $attempt->user->id . '_result.xlsx'
-        );
+
+        $pdf = PDF::loadView('admin.reports.attempt-detail-pdf', [
+            'attempt' => $attempt,
+            'lang' => $lang
+        ]);
+
+        return $pdf->download('quiz_' . $attempt->quiz->id . '_user_' . $attempt->user->id . '_result_' . $lang . '.pdf');
     }
+
 
     public function exportBulk(Request $request, Quiz $quiz)
     {
@@ -168,9 +158,11 @@ class ReportController extends Controller
             ->with(['user', 'answers.question.options', 'answers.questionOption'])
             ->get();
 
-        return Excel::download(
-            new QuizResultsExport($quiz, $attempts),
-            'quiz_' . $quiz->id . '_bulk_results.xlsx'
-        );
+        $pdf = PDF::loadView('admin.reports.quiz-results-pdf', [
+            'quiz' => $quiz,
+            'attempts' => $attempts
+        ]);
+
+        return $pdf->download('quiz_' . $quiz->id . '_bulk_results.pdf');
     }
 }

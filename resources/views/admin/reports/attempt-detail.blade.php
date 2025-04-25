@@ -8,9 +8,24 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1>{{ __('quiz.attempt_detail') }}</h1>
                     <div>
-                        <a href="{{ route('admin.reports.export.attempt', $attempt) }}" class="btn btn-success">
-                            <i class="fas fa-file-excel"></i> {{ __('general.export') }}
-                        </a>
+                        <div class="dropdown d-inline-block">
+                            <button class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-file-pdf"></i> {{ __('general.export') }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('admin.reports.export.attempt', ['attempt' => $attempt, 'lang' => 'id']) }}">
+                                        🇮🇩 Bahasa Indonesia
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('admin.reports.export.attempt', ['attempt' => $attempt, 'lang' => 'en']) }}">
+                                        🇺🇸 English
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
                         <a href="{{ route('admin.reports.quiz', $attempt->quiz) }}" class="btn btn-secondary">
                             {{ __('general.back') }}
                         </a>
@@ -63,8 +78,7 @@
                                     </tr>
                                     <tr>
                                         <th>{{ __('quiz.completed_at') }}:</th>
-                                        <td>{{ $attempt->completed_at ? $attempt->completed_at->format('Y-m-d H:i:s') : '-' }}
-                                        </td>
+                                        <td>{{ $attempt->completed_at ? $attempt->completed_at->format('Y-m-d H:i:s') : '-' }}</td>
                                     </tr>
                                     <tr>
                                         <th>{{ __('quiz.score') }}:</th>
@@ -73,8 +87,7 @@
                                     <tr>
                                         <th>{{ __('quiz.status') }}:</th>
                                         <td>
-                                            <span
-                                                class="badge bg-{{ $attempt->status === 'graded' ? 'success' : ($attempt->status === 'completed' ? 'warning' : 'info') }}">
+                                            <span class="badge bg-{{ $attempt->status === 'graded' ? 'success' : ($attempt->status === 'completed' ? 'warning' : 'info') }}">
                                                 {{ __('quiz.' . $attempt->status) }}
                                             </span>
                                         </td>
@@ -98,30 +111,28 @@
                                     @php
                                         $userAnswer = $attempt->answers->where('question_id', $question->id)->first();
                                     @endphp
-                                    <span
-                                        class="badge bg-{{ $userAnswer && $userAnswer->points_earned == $question->points ? 'success' : 'danger' }}">
+                                    <span class="badge bg-{{ $userAnswer && $userAnswer->points_earned == $question->points ? 'success' : 'danger' }}">
                                         {{ $userAnswer ? $userAnswer->points_earned : 0 }} / {{ $question->points }} pts
                                     </span>
                                 </div>
                                 <div class="card-body">
                                     @if ($question->type === 'multiple_choice')
                                         @foreach ($question->options as $option)
-                                            <div
-                                                class="form-check {{ $option->is_correct ? 'text-success fw-bold' : '' }}">
+                                            <div class="form-check {{ $option->is_correct ? 'text-success fw-bold' : '' }}">
                                                 <input class="form-check-input" type="radio" disabled
                                                     {{ $userAnswer && $userAnswer->question_option_id == $option->id ? 'checked' : '' }}>
                                                 <label class="form-check-label">
                                                     {{ $option->option }}
                                                     @if ($option->is_correct)
                                                         <i class="fas fa-check-circle text-success ms-2"></i>
-                                                        <span class="badge bg-success ms-2">Jawaban Benar</span>
+                                                        <span class="badge bg-success ms-2">{{ __('quiz.correct_answer') }}</span>
                                                     @endif
                                                     @if ($userAnswer && $userAnswer->question_option_id == $option->id)
                                                         @if (!$option->is_correct)
                                                             <i class="fas fa-times-circle text-danger ms-2"></i>
-                                                            <span class="badge bg-danger ms-2">Jawaban Peserta (Salah)</span>
+                                                            <span class="badge bg-danger ms-2">{{ __('quiz.user_answer') }} ({{ __('quiz.incorrect') }})</span>
                                                         @else
-                                                            <span class="badge bg-primary ms-2"></span>
+                                                            <span class="badge bg-primary ms-2">{{ __('quiz.user_answer') }}</span>
                                                         @endif
                                                     @endif
                                                 </label>

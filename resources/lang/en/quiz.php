@@ -89,4 +89,8 @@ return [
     'max_options_reached' => 'Maximum 10 options allowed',
     'min_options_required' => 'Minimum 2 options required',
     'edit_question' => 'Edit Question',
+    'not_completed' => 'Not Completed',
+    'not_graded' => 'Not Graded',
+    'incorrect' => 'Incorrect',
+    'correct' => 'Correct',
 ];

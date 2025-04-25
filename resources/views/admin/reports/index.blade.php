@@ -39,9 +39,24 @@
                                         <a href="{{ route('admin.reports.quiz', $quiz) }}" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i> {{ __('general.view') }}
                                         </a>
-                                        <a href="{{ route('admin.reports.export.quiz', $quiz) }}" class="btn btn-sm btn-success">
-                                            <i class="fas fa-file-excel"></i> {{ __('general.export') }}
-                                        </a>
+
+                                        <div class="dropdown d-inline-block">
+                                            <button class="btn btn-sm btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-file-pdf"></i> {{ __('general.export') }}
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('admin.reports.export.quiz', ['quiz' => $quiz, 'lang' => 'id']) }}">
+                                                        🇮🇩 Bahasa Indonesia
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('admin.reports.export.quiz', ['quiz' => $quiz, 'lang' => 'en']) }}">
+                                                        🇺🇸 English
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

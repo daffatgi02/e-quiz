@@ -89,4 +89,8 @@ return [
     'max_options_reached' => 'Maksimal 10 opsi diperbolehkan',
     'min_options_required' => 'Minimal 2 opsi diperlukan',
     'edit_question' => 'Edit Pertanyaan',
+    'not_completed' => 'Belum Selesai',
+    'not_graded' => 'Belum Dinilai',
+    'incorrect' => 'Salah',
+    'correct' => 'Benar',
 ];
