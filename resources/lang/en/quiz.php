@@ -109,5 +109,16 @@ return [
     'no_participants_yet' => 'No participants yet',
     'tracking_available_when_started' => 'Tracking will be available when participants start the quiz',
     'total_participants' => 'Total Participants',
-
+    'previous' => 'Previous',
+    'next' => 'Next',
+    'of' => 'of',
+    'mark' => 'Mark',
+    'answered' => 'Answered',
+    'unanswered' => 'Unanswered',
+    'marked' => 'Marked',
+    'confirm_submit' => 'Confirm Submit',
+    'questions_unanswered' => 'questions unanswered',
+    'confirm_submit_message' => 'Are you sure you want to submit the quiz? You won\'t be able to change your answers after this.',
+    'review_answers' => 'Review Answers',
+    'submit_quiz' => 'Submit Quiz',
 ];
