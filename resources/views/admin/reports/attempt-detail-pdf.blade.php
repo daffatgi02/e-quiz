@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>{{ __('quiz.attempt_detail') }} - {{ $attempt->quiz->title }}</title>
+    <title>{{ $attempt->quiz->title }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -92,8 +92,7 @@
 
 <body>
     <div class="header">
-        <h1>{{ __('quiz.attempt_detail') }}</h1>
-        <h2>{{ $attempt->quiz->title }}</h2>
+        <h1>{{ $attempt->quiz->title }}</h1>
         <p>{{ __('general.date') }}: {{ now()->format('d F Y H:i:s') }}</p>
 
     </div>
@@ -190,7 +189,7 @@
             @endif
 
             <div style="margin-top: 10px; text-align: right;">
-                <strong>Nilai: {{ $userAnswer ? $userAnswer->points_earned : 0 }} / {{ $question->points }}</strong>
+                <strong>Nilai Peserta: {{ $userAnswer ? $userAnswer->points_earned : 0 }}</strong>
             </div>
         </div>
     @endforeach
