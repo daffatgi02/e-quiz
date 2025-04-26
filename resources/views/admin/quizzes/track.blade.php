@@ -106,9 +106,15 @@
                                             <td>{{ $attempt->score ?? '-' }}</td>
                                             <td>
                                                 @if ($attempt->status === 'in_progress')
-                                                    <button class="btn btn-sm btn-secondary" disabled>
-                                                        <i class="fas fa-hourglass-half"></i> {{ __('quiz.in_progress') }}
-                                                    </button>
+                                                    <form
+                                                        action="{{ route('admin.quizzes.kick-user', [$quiz, $attempt]) }}"
+                                                        method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                            onclick="return confirm('Apakah Anda yakin ingin kick peserta ini?')">
+                                                            <i class="fas fa-user-times"></i> Kick
+                                                        </button>
+                                                    </form>
                                                 @else
                                                     <a href="{{ route('admin.reports.attempt.detail', $attempt) }}"
                                                         class="btn btn-sm btn-info">

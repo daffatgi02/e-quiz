@@ -8,6 +8,15 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1>{{ $quiz->title }}</h1>
                     <div>
+                        @if ($quiz->requires_token && (!$quiz->token_expires_at || $quiz->token_expires_at->isPast()))
+                            <form action="{{ route('admin.quizzes.regenerate-token', $quiz) }}" method="POST"
+                                class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-warning">
+                                    Regenerate Token
+                                </button>
+                            </form>
+                        @endif
                         <a href="{{ route('admin.quizzes.questions.create', $quiz) }}" class="btn btn-primary">
                             {{ __('quiz.add_question') }}
                         </a>
@@ -47,6 +56,25 @@
                                         <th>{{ __('quiz.single_attempt') }}:</th>
                                         <td>{{ $quiz->single_attempt ? __('general.yes') : __('general.no') }}</td>
                                     </tr>
+                                    <tr>
+                                        <th>Token Required:</th>
+                                        <td>{{ $quiz->requires_token ? __('general.yes') : __('general.no') }}</td>
+                                    </tr>
+                                    @if ($quiz->requires_token)
+                                        <tr>
+                                            <th>Token:</th>
+                                            <td>
+                                                <code class="fs-5">{{ $quiz->quiz_token }}</code>
+                                                @if ($quiz->token_expires_at)
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Expires: {{ $quiz->token_expires_at->format('d F Y H:i') }}
+                                                    </small>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endif
+                                    <tr>
                                     <tr>
                                         <th>{{ __('general.status') }}:</th>
                                         <td>

@@ -104,7 +104,16 @@
                         @endforeach
                     </div>
                 @endif
-
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#tokenModal">
+                                <i class="fas fa-key"></i> Masukkan Token
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <!-- Quiz yang Aktif -->
                 <div class="card mb-4 shadow-sm">
                     <div class="card-header bg-primary text-white">
@@ -219,6 +228,34 @@
         </div>
     </div>
 
+    <!-- Token Modal -->
+    <div class="modal fade" id="tokenModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Masukkan Token Quiz</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('quiz.token.validate') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="quiz_token" class="form-label">Token Quiz</label>
+                            <input type="text" class="form-control" id="quiz_token" name="quiz_token"
+                                placeholder="Format: ABCD-EFGH" maxlength="9" required>
+                            <small class="form-text text-muted">
+                                Masukkan token yang diberikan oleh admin
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Validasi Token</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     @push('styles')
         <style>
             /* Mobile-first styles */

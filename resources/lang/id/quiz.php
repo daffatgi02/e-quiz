@@ -121,4 +121,10 @@ return [
     'confirm_submit_message' => 'Apakah Anda yakin ingin mengumpulkan quiz? Anda tidak dapat mengubah jawaban setelah ini.',
     'review_answers' => 'Periksa Kembali',
     'submit_quiz' => 'Kirim Quiz',
+    'token_input' => 'Masukkan Token',
+    'token_required' => 'Quiz ini memerlukan token',
+    'token_expired' => 'Token sudah kadaluarsa',
+    'token_invalid' => 'Token tidak valid',
+    'token_success' => 'Token berhasil divalidasi',
+    'token_already_used' => 'Anda sudah menggunakan token ini',
 ];

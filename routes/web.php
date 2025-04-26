@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\QuizAttemptController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\QuizTokenController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -55,6 +56,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('users/{user}/generate-token', [App\Http\Controllers\Admin\TokenController::class, 'generateToken'])->name('tokens.generate');
     Route::post('users/{user}/reset-pin', [App\Http\Controllers\Admin\TokenController::class, 'resetPin'])->name('tokens.reset-pin');
     Route::get('tokens/download', [App\Http\Controllers\Admin\TokenController::class, 'downloadTokens'])->name('tokens.download');
+    Route::post('quizzes/{quiz}/regenerate-token', [AdminQuizController::class, 'regenerateToken'])
+        ->name('quizzes.regenerate-token');
+    Route::post('quizzes/{quiz}/kick-user/{attempt}', [AdminQuizController::class, 'kickUser'])
+        ->name('quizzes.kick-user');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -71,6 +76,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('quiz/{attempt}/submit', [QuizAttemptController::class, 'submit'])->name('quiz.submit');
     Route::get('quiz/{attempt}/result', [QuizAttemptController::class, 'result'])->name('quiz.result');
     Route::post('quiz/save-answer', [QuizAttemptController::class, 'saveAnswer'])->name('quiz.save-answer');
+    Route::get('quiz/token', [QuizTokenController::class, 'showTokenForm'])->name('quiz.token.form');
+    Route::post('quiz/token/validate', [QuizTokenController::class, 'validateToken'])->name('quiz.token.validate');
+    Route::get('quiz/check-attempt/{attempt}', [QuizAttemptController::class, 'checkStatus'])
+    ->name('quiz.check-status');
 });
 
 // Admin Login Routes - khusus untuk admin

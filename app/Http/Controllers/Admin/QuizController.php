@@ -7,6 +7,7 @@ use App\Models\Quiz;
 use App\Models\User;
 use App\Models\QuizAttempt;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class QuizController extends Controller
 {
@@ -30,13 +31,42 @@ class QuizController extends Controller
             'duration' => 'required|integer|min:1',
             'question_type' => 'required|in:multiple_choice,essay,mixed',
             'single_attempt' => 'boolean',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'requires_token' => 'boolean',
+            'token_expires_at' => 'nullable|date|after:now',
         ]);
 
-        Quiz::create($validated);
+        $quiz = Quiz::create($validated);
+
+        if ($request->requires_token) {
+            $quiz->generateToken();
+        }
 
         return redirect()->route('admin.quizzes.index')
             ->with('success', __('quiz.create_success'));
+    }
+
+    public function regenerateToken(Quiz $quiz)
+    {
+        if (!$quiz->requires_token) {
+            return back()->with('error', 'Quiz ini tidak memerlukan token');
+        }
+
+        // Cek apakah ada user yang sedang mengerjakan
+        $activeAttempts = QuizAttempt::where('quiz_id', $quiz->id)
+            ->where('status', 'in_progress')
+            ->exists();
+
+        if ($activeAttempts) {
+            return back()->with('error', 'Tidak dapat regenerate token karena ada peserta yang sedang mengerjakan quiz ini.');
+        }
+
+        try {
+            $newToken = $quiz->generateToken();
+            return back()->with('success', 'Token berhasil digenerate ulang: ' . $newToken);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal generate token: ' . $e->getMessage());
+        }
     }
 
     public function edit(Quiz $quiz)
@@ -46,20 +76,72 @@ class QuizController extends Controller
 
     public function update(Request $request, Quiz $quiz)
     {
-        $validated = $request->validate([
+        $rules = [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_date' => 'required|date',
             'duration' => 'required|integer|min:1',
             'question_type' => 'required|in:multiple_choice,essay,mixed',
             'single_attempt' => 'boolean',
-            'is_active' => 'boolean'
-        ]);
+            'is_active' => 'boolean',
+            'requires_token' => 'boolean',
+            'token_expires_at' => 'nullable|date|after:now',
+        ];
 
-        $quiz->update($validated);
+        $validated = $request->validate($rules);
 
-        return redirect()->route('admin.quizzes.index')
-            ->with('success', __('quiz.update_success'));
+        // Cek apakah ada user yang sedang mengerjakan quiz ini
+        $activeAttempts = QuizAttempt::where('quiz_id', $quiz->id)
+            ->where('status', 'in_progress')
+            ->exists();
+
+        if ($activeAttempts && $quiz->requires_token) {
+            return back()->with('error', 'Tidak dapat mengubah token karena ada peserta yang sedang mengerjakan quiz ini.');
+        }
+
+        try {
+            DB::transaction(function () use ($quiz, $request, $validated) {
+                // Handle token logic
+                if ($request->requires_token) {
+                    if (!$quiz->requires_token || !$quiz->quiz_token) {
+                        // Generate token baru jika diaktifkan dari false ke true
+                        $quiz->generateToken();
+                    }
+                } else {
+                    // Hapus token jika dimatikan
+                    $quiz->quiz_token = null;
+                    $quiz->token_expires_at = null;
+                }
+
+                $quiz->update($validated);
+            });
+
+            return redirect()->route('admin.quizzes.index')
+                ->with('success', __('quiz.update_success'));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal mengupdate quiz: ' . $e->getMessage());
+        }
+    }
+
+    public function kickUser(Quiz $quiz, QuizAttempt $attempt)
+    {
+        if ($attempt->status !== 'in_progress') {
+            return back()->with('error', 'Peserta tidak sedang mengerjakan quiz');
+        }
+
+        try {
+            $attempt->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'kicked' => true // Tambahkan kolom ini di migration
+            ]);
+
+            // Di sini bisa menambahkan notifikasi real-time jika menggunakan websocket
+
+            return back()->with('success', 'Peserta berhasil di-kick dari quiz');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal kick peserta: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Quiz $quiz)

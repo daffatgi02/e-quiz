@@ -40,6 +40,17 @@ class QuizAttemptController extends Controller
         // Quiz yang sedang aktif
         $activeQuizzes = Quiz::where('is_active', true)
             ->where('start_date', '<=', now())
+            ->where(function ($query) {
+                // Quiz tanpa token
+                $query->where('requires_token', false)
+                    // Atau quiz dengan token yang sudah digunakan user
+                    ->orWhere(function ($q) {
+                        $q->where('requires_token', true)
+                            ->whereHas('tokenUsers', function ($qu) {
+                                $qu->where('user_id', auth()->id());
+                            });
+                    });
+            })
             ->get();
 
         // Quiz yang akan datang
@@ -96,6 +107,10 @@ class QuizAttemptController extends Controller
         if ($attempt->user_id !== auth()->id() || $attempt->status !== 'in_progress') {
             return redirect()->route('quiz.index')
                 ->with('error', __('quiz.invalid_attempt'));
+        }
+        if ($attempt->kicked) {
+            return redirect()->route('quiz.index')
+                ->with('error', 'Anda telah di-kick dari quiz ini oleh administrator.');
         }
 
         $quiz = $attempt->quiz;
@@ -169,7 +184,12 @@ class QuizAttemptController extends Controller
 
         return redirect()->route('quiz.result', $attempt);
     }
-
+    public function checkStatus(QuizAttempt $attempt)
+    {
+        return response()->json([
+            'kicked' => $attempt->kicked
+        ]);
+    }
     public function result(QuizAttempt $attempt)
     {
         if ($attempt->user_id !== auth()->id()) {

@@ -121,4 +121,10 @@ return [
     'confirm_submit_message' => 'Are you sure you want to submit the quiz? You won\'t be able to change your answers after this.',
     'review_answers' => 'Review Answers',
     'submit_quiz' => 'Submit Quiz',
+    'token_input' => 'Enter Token',
+    'token_required' => 'This quiz requires a token',
+    'token_expired' => 'Token expired',
+    'token_invalid' => 'Invalid token',
+    'token_success' => 'Token validated successfully',
+    'token_already_used' => 'You have already used this token',
 ];
