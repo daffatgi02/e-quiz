@@ -38,6 +38,25 @@
         .btn.rounded-circle i {
             margin: 0 !important;
         }
+
+        /* Posisi default (kanan) untuk desktop */
+        .floating-refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1030;
+            transition: all 0.3s ease;
+        }
+
+        /* Posisi kiri untuk mobile */
+        @media (max-width: 768px) {
+            .floating-refresh-btn {
+                right: auto;
+                /* Reset posisi kanan */
+                left: 20px;
+                /* Atur posisi kiri */
+            }
+        }
     </style>
     <div class="container">
         <div class="row">
@@ -220,7 +239,7 @@
             </div>
         </div>
         <!-- Floating Refresh Button -->
-        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div class="floating-refresh-btn">
             <button class="btn btn-primary rounded-circle shadow" onclick="location.reload();"
                 title="{{ __('general.refresh') }}">
                 <i class="fas fa-sync-alt"></i>

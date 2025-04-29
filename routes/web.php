@@ -32,6 +32,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dashboard', [ReportController::class, 'index'])->name('dashboard');
     // History per user
     Route::get('users/{user}/history', [AdminUserController::class, 'history'])->name('users.history');
+    Route::get('quizzes/{quiz}/questions/export', [AdminQuestionController::class, 'exportQuestions'])->name('quizzes.questions.export');
+    Route::get('quizzes/{quiz}/questions/import', [AdminQuestionController::class, 'showImportForm'])->name('quizzes.questions.import');
+    Route::post('quizzes/{quiz}/questions/import', [AdminQuestionController::class, 'importQuestions'])->name('quizzes.questions.import.store');
+    Route::get('questions/json-format', function () {
+        return view('admin.questions.json-format');
+    })->name('questions.json-format');
+
     // Quiz Management
     Route::resource('quizzes', AdminQuizController::class);
     Route::resource('quizzes.questions', AdminQuestionController::class);
@@ -79,7 +86,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('quiz/token', [QuizTokenController::class, 'showTokenForm'])->name('quiz.token.form');
     Route::post('quiz/token/validate', [QuizTokenController::class, 'validateToken'])->name('quiz.token.validate');
     Route::get('quiz/check-attempt/{attempt}', [QuizAttemptController::class, 'checkStatus'])
-    ->name('quiz.check-status');
+        ->name('quiz.check-status');
 });
 
 // Admin Login Routes - khusus untuk admin

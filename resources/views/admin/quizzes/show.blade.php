@@ -17,6 +17,27 @@
                                 </button>
                             </form>
                         @endif
+
+                        <!-- Add these buttons -->
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="fas fa-file-export"></i> {{ __('Questions') }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a href="{{ route('admin.quizzes.questions.export', $quiz) }}" class="dropdown-item">
+                                        <i class="fas fa-download"></i> {{ __('Export Questions') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.quizzes.questions.import', $quiz) }}" class="dropdown-item">
+                                        <i class="fas fa-upload"></i> {{ __('Import Questions') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
                         <a href="{{ route('admin.quizzes.questions.create', $quiz) }}" class="btn btn-primary">
                             {{ __('quiz.add_question') }}
                         </a>

@@ -1,4 +1,4 @@
-{{-- resources/views/quizzes/result.blade.php --}}
+{{-- resources/views/quizzes/result.blade.php (updated) --}}
 @extends('layouts.app')
 
 @section('content')
@@ -27,47 +27,98 @@
                     </div>
 
                     @foreach($attempt->quiz->questions as $index => $question)
+                        @php
+                            $userAnswer = $attempt->answers->where('question_id', $question->id)->first();
+                            $earnedPoints = $userAnswer ? ($userAnswer->points_earned ?? 0) : 0;
+                            $maxPoints = $question->points;
+                            $percentScore = $maxPoints > 0 ? ($earnedPoints / $maxPoints) * 100 : 0;
+
+                            // Determine score color based on percentage
+                            if ($percentScore >= 80) {
+                                $scoreColorClass = 'text-success';
+                            } elseif ($percentScore >= 50) {
+                                $scoreColorClass = 'text-warning';
+                            } else {
+                                $scoreColorClass = 'text-danger';
+                            }
+                        @endphp
+
                         <div class="card mb-3">
-                            <div class="card-header">
-                                {{ $index + 1 }}). {{ $question->question }}
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ $index + 1 }}). {{ $question->question }}</strong>
+                                </div>
                                 @if($attempt->status === 'graded')
-                                    <span class="float-end">
-                                        {{ __('quiz.points') }}:
-                                        {{ $attempt->answers->where('question_id', $question->id)->first()->points_earned ?? 0 }} /
-                                        {{ $question->points }}
-                                    </span>
+                                    <div class="points-display {{ $scoreColorClass }} fw-bold">
+                                        {{ $earnedPoints }} / {{ $maxPoints }}
+                                    </div>
                                 @endif
                             </div>
                             <div class="card-body">
-                                @php
-                                    $userAnswer = $attempt->answers->where('question_id', $question->id)->first();
-                                @endphp
-
                                 @if($question->type === 'multiple_choice')
-                                    @foreach($question->options as $option)
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" disabled
-                                                   {{ $userAnswer && $userAnswer->question_option_id == $option->id ? 'checked' : '' }}>
-                                            <label class="form-check-label">
-                                                {{ $option->option }}
-                                                @if ($userAnswer && $userAnswer->question_option_id == $option->id)
-                                                    @if (!$option->is_correct)
+                                    @foreach($question->options as $optionIndex => $option)
+                                        @php
+                                            $letter = chr(65 + $optionIndex); // A, B, C, D, etc.
+                                            $isUserAnswer = $userAnswer && $userAnswer->question_option_id == $option->id;
+                                            $isCorrect = $option->is_correct;
+
+                                            // Determine option display class
+                                            $optionClass = '';
+                                            if ($isUserAnswer && $isCorrect) {
+                                                $optionClass = 'bg-success bg-opacity-10';
+                                            } elseif ($isUserAnswer && !$isCorrect) {
+                                                $optionClass = 'bg-danger bg-opacity-10';
+                                            } elseif ($isCorrect) {
+                                                $optionClass = 'bg-success bg-opacity-10';
+                                            }
+                                        @endphp
+
+                                        <div class="form-check p-2 rounded mb-2 {{ $optionClass }}">
+                                            <div class="d-flex align-items-start">
+                                                <div class="me-2">
+                                                    <strong>{{ $letter }}.</strong>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <input class="form-check-input" type="radio" disabled {{ $isUserAnswer ? 'checked' : '' }}>
+                                                    <label class="form-check-label">
+                                                        {{ $option->option }}
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    @if ($isUserAnswer && !$isCorrect)
                                                         <i class="fas fa-times-circle text-danger ms-2"></i>
-                                                        <span class="badge bg-danger ms-2">Jawaban Anda (Salah)</span>
+                                                    @elseif ($isUserAnswer && $isCorrect)
+                                                        <i class="fas fa-check-circle text-success ms-2"></i>
+                                                    @elseif ($isCorrect)
+                                                        <i class="fas fa-check-circle text-success ms-2"></i>
                                                     @endif
-                                                @endif
-                                                @if($option->is_correct)
-                                                    <span class="badge bg-success ms-2">{{ __('quiz.correct_answer') }}</span>
-                                                @endif
-                                            </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     @endforeach
                                 @else
-                                    <p><strong>{{ __('quiz.your_answer') }}:</strong></p>
-                                    <p>{{ $userAnswer->essay_answer ?? __('quiz.no_answer') }}</p>
-                                    @if($userAnswer && !$userAnswer->is_graded)
-                                        <span class="badge bg-warning">{{ __('quiz.pending_grading') }}</span>
-                                    @endif
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="essay-answer p-3 rounded {{ $earnedPoints > 0 ? 'bg-success bg-opacity-10' : 'bg-danger bg-opacity-10' }}">
+                                                <p class="mb-2"><strong>{{ __('quiz.your_answer') }}:</strong></p>
+                                                <div class="p-3 bg-white rounded">
+                                                    {{ $userAnswer->essay_answer ?? __('quiz.no_answer') }}
+                                                </div>
+
+                                                @if($userAnswer && !$userAnswer->is_graded)
+                                                    <div class="mt-2">
+                                                        <span class="badge bg-warning">{{ __('quiz.pending_grading') }}</span>
+                                                    </div>
+                                                @elseif($userAnswer && $userAnswer->is_graded)
+                                                    <div class="mt-2">
+                                                        <span class="badge {{ $scoreColorClass === 'text-success' ? 'bg-success' : ($scoreColorClass === 'text-warning' ? 'bg-warning' : 'bg-danger') }}">
+                                                            {{ $earnedPoints }} / {{ $maxPoints }} {{ __('quiz.points') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -81,4 +132,45 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Custom styles for the result page */
+    .points-display {
+        font-size: 1.1rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .text-success {
+        color: #198754 !important;
+    }
+
+    .text-warning {
+        color: #ffc107 !important;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .form-check.bg-success.bg-opacity-10 {
+        border: 1px solid rgba(25, 135, 84, 0.3);
+    }
+
+    .form-check.bg-danger.bg-opacity-10 {
+        border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+
+    .essay-answer {
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .essay-answer.bg-success.bg-opacity-10 {
+        border-color: rgba(25, 135, 84, 0.3);
+    }
+
+    .essay-answer.bg-danger.bg-opacity-10 {
+        border-color: rgba(220, 53, 69, 0.3);
+    }
+</style>
 @endsection

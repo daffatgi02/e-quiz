@@ -127,4 +127,11 @@ return [
     'token_invalid' => 'Invalid token',
     'token_success' => 'Token validated successfully',
     'token_already_used' => 'You have already used this token',
+    'export_questions' => 'Export Questions',
+    'import_questions' => 'Import Questions',
+    'import_success' => 'Successfully imported :count questions',
+    'import_error' => 'Failed to import questions: :message',
+    'json_format' => 'JSON Format',
+    'select_json_file' => 'Select a JSON file with questions to import',
+    'confirm_import' => 'I confirm that I want to import these questions',
 ];

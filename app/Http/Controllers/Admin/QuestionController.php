@@ -134,4 +134,98 @@ class QuestionController extends Controller
         return redirect()->route('admin.quizzes.show', $quiz)
             ->with('success', __('quiz.question_deleted'));
     }
+
+    /**
+     * Export quiz questions to JSON file
+     */
+    public function exportQuestions(Quiz $quiz)
+    {
+        $questions = $quiz->questions()->with('options')->get();
+
+        $data = [
+            'quiz_id' => $quiz->id,
+            'quiz_title' => $quiz->title,
+            'questions' => $questions->map(function ($question) {
+                return [
+                    'question' => $question->question,
+                    'type' => $question->type,
+                    'points' => $question->points,
+                    'requires_manual_grading' => $question->requires_manual_grading,
+                    'image_path' => $question->image_path, // Include image path if present
+                    'options' => $question->type === 'multiple_choice' ? $question->options->map(function ($option) {
+                        return [
+                            'option' => $option->option,
+                            'is_correct' => $option->is_correct,
+                            'image_path' => $option->image_path, // Include option image path if present
+                            'order' => $option->order
+                        ];
+                    }) : [],
+                ];
+            }),
+        ];
+
+        $jsonData = json_encode($data, JSON_PRETTY_PRINT);
+        $filename = 'quiz_' . $quiz->id . '_questions_' . date('Ymd_His') . '.json';
+
+        return response()->streamDownload(function () use ($jsonData) {
+            echo $jsonData;
+        }, $filename, [
+            'Content-Type' => 'application/json',
+        ]);
+    }
+
+    /**
+     * Show form for importing questions
+     */
+    public function showImportForm(Quiz $quiz)
+    {
+        return view('admin.questions.import', compact('quiz'));
+    }
+
+    /**
+     * Import questions from JSON file
+     */
+    public function importQuestions(Request $request, Quiz $quiz)
+    {
+        $request->validate([
+            'questions_file' => 'required|file|mimes:json',
+        ]);
+
+        try {
+            $jsonData = file_get_contents($request->file('questions_file')->path());
+            $data = json_decode($jsonData, true);
+
+            if (!isset($data['questions']) || !is_array($data['questions'])) {
+                return back()->with('error', 'Format file JSON tidak valid');
+            }
+
+            DB::transaction(function () use ($quiz, $data) {
+                foreach ($data['questions'] as $questionData) {
+                    $question = $quiz->questions()->create([
+                        'question' => $questionData['question'],
+                        'type' => $questionData['type'],
+                        'points' => $questionData['points'],
+                        'requires_manual_grading' => $questionData['requires_manual_grading'] ?? false,
+                        'image_path' => $questionData['image_path'] ?? null,
+                    ]);
+
+                    if ($questionData['type'] === 'multiple_choice' && isset($questionData['options'])) {
+                        foreach ($questionData['options'] as $index => $optionData) {
+                            $question->options()->create([
+                                'option' => $optionData['option'],
+                                'is_correct' => $optionData['is_correct'],
+                                'image_path' => $optionData['image_path'] ?? null,
+                                'order' => $optionData['order'] ?? $index
+                            ]);
+                        }
+                    }
+                }
+            });
+
+            return redirect()->route('admin.quizzes.show', $quiz)
+                ->with('success', count($data['questions']) . ' pertanyaan berhasil diimpor');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal mengimpor pertanyaan: ' . $e->getMessage());
+        }
+    }
 }

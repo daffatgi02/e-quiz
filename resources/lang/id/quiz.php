@@ -127,4 +127,11 @@ return [
     'token_invalid' => 'Token tidak valid',
     'token_success' => 'Token berhasil divalidasi',
     'token_already_used' => 'Anda sudah menggunakan token ini',
+    'export_questions' => 'Ekspor Pertanyaan',
+    'import_questions' => 'Impor Pertanyaan',
+    'import_success' => 'Berhasil mengimpor :count pertanyaan',
+    'import_error' => 'Gagal mengimpor pertanyaan: :message',
+    'json_format' => 'Format JSON',
+    'select_json_file' => 'Pilih file JSON dengan pertanyaan untuk diimpor',
+    'confirm_import' => 'Saya mengkonfirmasi bahwa saya ingin mengimpor pertanyaan-pertanyaan ini',
 ];
