@@ -48,13 +48,13 @@
                     </div>
                 </div>
 
-                <!-- Users List -->
+                <!-- Main content - combined participants and token users -->
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">{{ __('quiz.participants_status') }}</h5>
                     </div>
                     <div class="card-body">
-                        @if ($attempts->isEmpty())
+                        @if ($attempts->isEmpty() && (!$quiz->requires_token || $quiz->tokenUsers->isEmpty()))
                             <div class="text-center py-5">
                                 <h5>{{ __('quiz.no_participants_yet') }}</h5>
                                 <p class="text-muted">{{ __('quiz.tracking_available_when_started') }}</p>
@@ -65,6 +65,10 @@
                                     <tr>
                                         <th>{{ __('general.name') }}</th>
                                         <th>{{ __('general.nik') }}</th>
+                                        <th>{{ __('general.department') }}</th>
+                                        @if($quiz->requires_token)
+                                            <th>{{ __('quiz.token_used_at') }}</th>
+                                        @endif
                                         <th>{{ __('quiz.status') }}</th>
                                         <th>{{ __('quiz.started_at') }}</th>
                                         <th>{{ __('quiz.remaining_time') }}</th>
@@ -73,6 +77,49 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @if($quiz->requires_token)
+                                        {{-- Display token users who haven't attempted yet --}}
+                                        @foreach($quiz->tokenUsers as $user)
+                                            @php
+                                                $userAttempt = $attempts->where('user_id', $user->id)->first();
+                                                if($userAttempt) continue; // Skip if user has attempt (will show in attempts loop)
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $user->name }}</td>
+                                                <td>{{ $user->nik }}</td>
+                                                <td>{{ $user->department }}</td>
+                                                <td>
+                                                    @if (is_string($user->pivot->token_used_at))
+                                                        {{ $user->pivot->token_used_at }}
+                                                    @elseif($user->pivot->token_used_at)
+                                                        {{ $user->pivot->token_used_at->format('Y-m-d H:i') }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary">
+                                                        {{ __('quiz.not_started') }}
+                                                    </span>
+                                                </td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td>
+                                                    <form action="{{ route('admin.quizzes.revoke-token', [$quiz, $user]) }}"
+                                                        method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-warning"
+                                                            onclick="return confirm('{{ __('quiz.revoke_token_confirm') }}')">
+                                                            <i class="fas fa-ban"></i> {{ __('quiz.revoke_token') }}
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+
+                                    {{-- Display all attempts --}}
                                     @foreach ($attempts as $attempt)
                                         @php
                                             $remainingTime = null;
@@ -84,6 +131,25 @@
                                         <tr>
                                             <td>{{ $attempt->user->name }}</td>
                                             <td>{{ $attempt->user->nik }}</td>
+                                            <td>{{ $attempt->user->department }}</td>
+                                            @if($quiz->requires_token)
+                                                <td>
+                                                    @php
+                                                        $tokenUser = $quiz->tokenUsers->where('id', $attempt->user->id)->first();
+                                                    @endphp
+                                                    @if ($tokenUser && isset($tokenUser->pivot))
+                                                        @if (is_string($tokenUser->pivot->token_used_at))
+                                                            {{ $tokenUser->pivot->token_used_at }}
+                                                        @elseif($tokenUser->pivot->token_used_at)
+                                                            {{ $tokenUser->pivot->token_used_at->format('Y-m-d H:i') }}
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                            @endif
                                             <td>
                                                 <span
                                                     class="badge bg-{{ $attempt->status === 'graded' ? 'success' : ($attempt->status === 'completed' ? 'warning' : 'info') }}">
@@ -106,13 +172,12 @@
                                             <td>{{ $attempt->score ?? '-' }}</td>
                                             <td>
                                                 @if ($attempt->status === 'in_progress')
-                                                    <form
-                                                        action="{{ route('admin.quizzes.kick-user', [$quiz, $attempt]) }}"
+                                                    <form action="{{ route('admin.quizzes.kick-user', [$quiz, $attempt]) }}"
                                                         method="POST" class="d-inline">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-danger"
-                                                            onclick="return confirm('Apakah Anda yakin ingin kick peserta ini?')">
-                                                            <i class="fas fa-user-times"></i> Kick
+                                                            onclick="return confirm('{{ __('quiz.kick_user_confirm') }}')">
+                                                            <i class="fas fa-user-times"></i> {{ __('quiz.kick') }}
                                                         </button>
                                                     </form>
                                                 @else
@@ -121,13 +186,13 @@
                                                         <i class="fas fa-eye"></i> {{ __('general.view') }}
                                                     </a>
 
-                                                    <form
-                                                        action="{{ route('admin.quizzes.reset-attempt', ['quiz' => $quiz, 'user' => $attempt->user]) }}"
+                                                    <form action="{{ route('admin.quizzes.reset-attempt', ['quiz' => $quiz, 'user' => $attempt->user]) }}"
                                                         method="POST" class="d-inline">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-warning"
                                                             onclick="return confirm('{{ __('quiz.confirm_reset_attempt') }}')">
-                                                            <i class="fas fa-redo"></i> {{ __('quiz.reset_attempt') }}
+                                                            <i class="fas fa-redo"></i>
+                                                            {{ __('quiz.reset_attempt') }}
                                                         </button>
                                                     </form>
                                                 @endif

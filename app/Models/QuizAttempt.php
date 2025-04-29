@@ -15,12 +15,14 @@ class QuizAttempt extends Model
         'started_at',
         'completed_at',
         'score',
-        'status'
+        'status',
+        'kicked',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'kicked' => 'boolean',
     ];
 
     public function user()

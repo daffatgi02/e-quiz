@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\QuizAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class QuizController extends Controller
 {
@@ -130,16 +131,19 @@ class QuizController extends Controller
         }
 
         try {
-            $attempt->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-                'kicked' => true // Tambahkan kolom ini di migration
-            ]);
+            // Coba debug dulu dengan dd()
+            Log::info('Attempting to kick user for attempt #' . $attempt->id);
 
-            // Di sini bisa menambahkan notifikasi real-time jika menggunakan websocket
+            $attempt->kicked = true;  // Set langsung properti
+            $attempt->status = 'completed';
+            $attempt->completed_at = now();
+            $attempt->save();  // Pastikan save dipanggil
+
+            Log::info('Kicked status after update: ' . ($attempt->kicked ? 'true' : 'false'));
 
             return back()->with('success', 'Peserta berhasil di-kick dari quiz');
         } catch (\Exception $e) {
+            Log::error('Error kicking user: ' . $e->getMessage());
             return back()->with('error', 'Gagal kick peserta: ' . $e->getMessage());
         }
     }
@@ -172,6 +176,21 @@ class QuizController extends Controller
             ->orderBy('started_at', 'desc')
             ->paginate(20);
 
+        // Load tokenUsers untuk tab token users
+        if ($quiz->requires_token) {
+            $quiz->load(['tokenUsers' => function ($query) {
+                $query->withPivot('token_used_at');
+            }]);
+
+            // Cast token_used_at to DateTime
+            $quiz->tokenUsers->transform(function ($user) {
+                if ($user->pivot && $user->pivot->token_used_at && is_string($user->pivot->token_used_at)) {
+                    $user->pivot->token_used_at = \Carbon\Carbon::parse($user->pivot->token_used_at);
+                }
+                return $user;
+            });
+        }
+
         $statistics = [
             'in_progress' => $quiz->attempts()->where('status', 'in_progress')->count(),
             'completed' => $quiz->attempts()->where('status', 'completed')->count(),
@@ -179,6 +198,37 @@ class QuizController extends Controller
             'total_participants' => $quiz->attempts()->count(),
         ];
 
+        if ($quiz->requires_token) {
+            // Hitung pengguna token yang belum mulai quiz
+            $tokenUsersCount = $quiz->tokenUsers()->count();
+            $attemptUsersCount = $quiz->attempts()->distinct('user_id')->count('user_id');
+            $statistics['not_started'] = $tokenUsersCount - $attemptUsersCount;
+        }
+
         return view('admin.quizzes.track', compact('quiz', 'attempts', 'statistics'));
+    }
+
+    public function revokeToken(Quiz $quiz, User $user)
+    {
+        if (!$quiz->requires_token) {
+            return back()->with('error', 'Quiz ini tidak memerlukan token');
+        }
+
+        // Cek apakah user sudah mengerjakan quiz
+        $userAttempt = QuizAttempt::where('quiz_id', $quiz->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($userAttempt) {
+            return back()->with('error', 'Tidak dapat mencabut token karena peserta sudah memulai atau menyelesaikan quiz');
+        }
+
+        try {
+            // Hapus dari pivot table
+            $quiz->tokenUsers()->detach($user->id);
+            return back()->with('success', 'Token berhasil dicabut dari peserta');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal mencabut token: ' . $e->getMessage());
+        }
     }
 }

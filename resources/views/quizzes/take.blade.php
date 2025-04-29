@@ -425,16 +425,31 @@
                         });
                     }, 1000);
                 });
-                setInterval(function() {
-                    fetch(`/quiz/check-attempt/{{ $attempt->id }}`)
+
+                function checkKickStatus() {
+                    console.log('Checking kick status...');
+                    fetch('/quiz/check-attempt/{{ $attempt->id }}')
                         .then(response => response.json())
                         .then(data => {
-                            if (data.kicked) {
-                                alert('Anda telah di-kick dari quiz ini oleh administrator.');
-                                window.location.href = '{{ route('quiz.index') }}';
+                            console.log('Kick status response:', data);
+                            if (data.kicked === true) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Anda Dikeluarkan',
+                                    text: 'Anda telah dikeluarkan dari quiz ini oleh administrator.',
+                                    confirmButtonText: 'OK',
+                                    allowOutsideClick: false
+                                }).then(() => {
+                                    window.location.href = '{{ route('quiz.index') }}';
+                                });
                             }
+                        })
+                        .catch(error => {
+                            console.error('Error checking kick status:', error);
                         });
-                }, 30000);
+                }
+                checkKickStatus();
+                setInterval(checkKickStatus, 5000);
                 // Initial check for answered questions
                 document.querySelectorAll('.question-card').forEach((card, index) => {
                     checkAndMarkAnswered(index);

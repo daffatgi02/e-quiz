@@ -255,7 +255,7 @@
                     <h5 class="modal-title">Masukkan Token Quiz</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="{{ route('quiz.token.validate') }}" method="POST">
+                <form action="{{ route('quiz.token.validate') }}" method="POST" id="tokenForm">
                     @csrf
                     <div class="modal-body">
                         <div class="mb-3">
@@ -413,6 +413,131 @@
                     setInterval(updateCountdown, 1000);
                 });
             });
+        </script>
+        <script>
+            // Token validation with SweetAlert2
+            document.getElementById('tokenForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const token = document.getElementById('quiz_token').value;
+                const tokenRegex = /^[A-Z]{4}-[A-Z]{4}$/;
+
+                // Validasi format token
+                if (!tokenRegex.test(token)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Format Token Salah',
+                        text: 'Format token yang benar adalah: ABCD-EFGH (8 huruf kapital dengan tanda - di tengah)',
+                        confirmButtonText: 'Coba Lagi'
+                    });
+                    return;
+                }
+
+                // Jika format benar, kirim form
+                const formData = new FormData(this);
+
+                fetch('{{ route('quiz.token.validate') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.redirected) {
+                            // Jika redirect, berarti token valid
+                            window.location.href = response.url;
+                            return null;
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data === null) return; // Sudah di-redirect
+
+                        if (data.errors && data.errors.quiz_token) {
+                            // Tampilkan error
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Token Tidak Valid',
+                                text: data.errors.quiz_token,
+                                confirmButtonText: 'Coba Lagi'
+                            });
+                        } else {
+                            // Fallback jika ada error lain
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Terjadi Kesalahan',
+                                text: 'Silakan coba lagi nanti atau hubungi administrator.',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Terjadi Kesalahan',
+                            text: 'Gagal memproses token. Silakan coba lagi nanti.',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            });
+
+            // Tampilkan SweetAlert jika ada error atau success dari session
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: "{{ session('error') }}",
+                    confirmButtonText: 'OK'
+                });
+            @endif
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Perhatian',
+                    text: "{{ session('error') }}",
+                    confirmButtonText: '{{ __('general.ok') }}'
+                });
+            @endif
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: "{{ session('success') }}",
+                    confirmButtonText: 'OK'
+                });
+            @endif
+
+            @if (session('info'))
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Informasi',
+                    text: "{{ session('info') }}",
+                    confirmButtonText: 'OK'
+                });
+            @endif
+
+            @if ($errors->has('quiz_token'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Token Tidak Valid',
+                    text: "{{ $errors->first('quiz_token') }}",
+                    confirmButtonText: 'Coba Lagi'
+                });
+            @endif
+        </script>
+        <script>
+            // Show kicked notification if redirected from take page
+            @if (session('error') && session('error') == 'Anda telah dikeluarkan dari quiz ini oleh administrator.')
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Anda Dikeluarkan',
+                    text: '{{ session('error') }}',
+                    confirmButtonText: 'OK'
+                });
+            @endif
         </script>
     @endpush
 @endsection

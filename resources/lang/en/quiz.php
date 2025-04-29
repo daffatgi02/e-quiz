@@ -134,4 +134,15 @@ return [
     'json_format' => 'JSON Format',
     'select_json_file' => 'Select a JSON file with questions to import',
     'confirm_import' => 'I confirm that I want to import these questions',
+    'token_users' => 'Token Users',
+    'token_used_at' => 'Token Used At',
+    'revoke_token' => 'Revoke Token',
+    'revoke_token_confirm' => 'Are you sure you want to revoke token access for this user?',
+    'not_started' => 'Not Started',
+    'kick' => 'Kick',
+    'kick_user_confirm' => 'Are you sure you want to kick this user?',
+    'kicked_title' => 'You have been kicked',
+    'kicked_by_admin' => 'You have been kicked from this quiz by an administrator.',
+    'attempt_already_completed' => 'This quiz attempt has already been completed.',
+
 ];

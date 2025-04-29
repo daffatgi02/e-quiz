@@ -57,6 +57,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Fix route bulk export - seharusnya di dalam group admin dan dengan parameter quiz
     Route::post('reports/export/bulk/{quiz}', [ReportController::class, 'exportBulk'])->name('reports.export.bulk');
     Route::get('quizzes/{quiz}/track', [AdminQuizController::class, 'track'])->name('quizzes.track');
+    Route::post('quizzes/{quiz}/revoke-token/{user}', [AdminQuizController::class, 'revokeToken'])
+        ->name('quizzes.revoke-token');
     // Reset attempt route
     Route::post('quizzes/{quiz}/reset-attempt/{user}', [AdminQuizController::class, 'resetAttempt'])->name('quizzes.reset-attempt');
     // Token Management
@@ -85,8 +87,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('quiz/save-answer', [QuizAttemptController::class, 'saveAnswer'])->name('quiz.save-answer');
     Route::get('quiz/token', [QuizTokenController::class, 'showTokenForm'])->name('quiz.token.form');
     Route::post('quiz/token/validate', [QuizTokenController::class, 'validateToken'])->name('quiz.token.validate');
-    Route::get('quiz/check-attempt/{attempt}', [QuizAttemptController::class, 'checkStatus'])
-        ->name('quiz.check-status');
+    Route::get('/quiz/check-attempt/{attempt}', [QuizAttemptController::class, 'checkStatus'])->name('quiz.check-status');
 });
 
 // Admin Login Routes - khusus untuk admin

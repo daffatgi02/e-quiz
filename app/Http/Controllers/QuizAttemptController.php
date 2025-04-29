@@ -7,6 +7,7 @@ use App\Models\QuizAttempt;
 use App\Models\UserAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -104,13 +105,19 @@ class QuizAttemptController extends Controller
 
     public function take(QuizAttempt $attempt)
     {
-        if ($attempt->user_id !== auth()->id() || $attempt->status !== 'in_progress') {
+        if ($attempt->user_id !== auth()->id()) {
             return redirect()->route('quiz.index')
                 ->with('error', __('quiz.invalid_attempt'));
         }
+
+        if ($attempt->status !== 'in_progress') {
+            return redirect()->route('quiz.index')
+                ->with('error', __('quiz.attempt_already_completed'));
+        }
+
         if ($attempt->kicked) {
             return redirect()->route('quiz.index')
-                ->with('error', 'Anda telah di-kick dari quiz ini oleh administrator.');
+                ->with('error', __('quiz.kicked_by_admin'));
         }
 
         $quiz = $attempt->quiz;
@@ -186,8 +193,12 @@ class QuizAttemptController extends Controller
     }
     public function checkStatus(QuizAttempt $attempt)
     {
+        // Log untuk debug
+        Log::info('Check status for attempt #' . $attempt->id . ', kicked = ' . ($attempt->kicked ? 'true' : 'false'));
+
+        // Make sure to cast to boolean
         return response()->json([
-            'kicked' => $attempt->kicked
+            'kicked' => (bool)$attempt->kicked
         ]);
     }
     public function result(QuizAttempt $attempt)
