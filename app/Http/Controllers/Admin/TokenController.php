@@ -35,6 +35,18 @@ class TokenController extends Controller
             ->when($request->position, function ($query, $position) {
                 $query->where('position', $position);
             })
+            ->when($request->perusahaan, function ($query, $perusahaan) { // Add this line
+                $query->where('perusahaan', $perusahaan);
+            })
+            ->when($request->search, function ($query, $search) { // Add this line
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('nik', 'like', "%{$search}%")
+                        ->orWhere('position', 'like', "%{$search}%")
+                        ->orWhere('department', 'like', "%{$search}%")
+                        ->orWhere('perusahaan', 'like', "%{$search}%");
+                });
+            })
             ->whereNotNull('login_token')
             ->get();
 
@@ -42,7 +54,9 @@ class TokenController extends Controller
             'users' => $users,
             'filters' => [
                 'department' => $request->department ?? null,
-                'position' => $request->position ?? null
+                'position' => $request->position ?? null,
+                'perusahaan' => $request->perusahaan ?? null, // Add this line
+                'search' => $request->search ?? null, // Add this line
             ]
         ]);
 

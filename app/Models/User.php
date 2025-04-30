@@ -20,6 +20,7 @@ class User extends Authenticatable
         'nik',
         'position',
         'department',
+        'perusahaan',
         'is_admin',
         'is_active',
         'language',

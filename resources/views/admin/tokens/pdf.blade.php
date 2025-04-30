@@ -103,7 +103,35 @@
     <div class="report-header">
         <h1>Daftar ID-Trainer</h1>
         <p>Tanggal: {{ date('d F Y') }}</p>
+        @if ($filters['department'] || $filters['position'] || $filters['perusahaan'] || $filters['search'])
+            <div class="filter-info">
+                Filter:
+                @if ($filters['department'])
+                    Departemen: <strong>{{ $filters['department'] }}</strong>
+                @endif
 
+                @if ($filters['position'])
+                    @if ($filters['department'])
+                        |
+                    @endif
+                    Posisi: <strong>{{ $filters['position'] }}</strong>
+                @endif
+
+                @if ($filters['perusahaan'])
+                    @if ($filters['department'] || $filters['position'])
+                        |
+                    @endif
+                    Perusahaan: <strong>{{ $filters['perusahaan'] }}</strong>
+                @endif
+
+                @if ($filters['search'])
+                    @if ($filters['department'] || $filters['position'] || $filters['perusahaan'])
+                        |
+                    @endif
+                    Pencarian: <strong>{{ $filters['search'] }}</strong>
+                @endif
+            </div>
+        @endif
         @if ($filters['department'] || $filters['position'])
             <div class="filter-info">
                 Filter:
@@ -143,6 +171,10 @@
                     <div class="field">
                         <span class="field-label">Posisi:</span>
                         <span>{{ $user->position }}</span>
+                    </div>
+                    <div class="field">
+                        <span class="field-label">Perusahaan:</span>
+                        <span>{{ $user->perusahaan ?? '-' }}</span>
                     </div>
                     <div>
                         <span class="field-label">ID-Trainer:</span>

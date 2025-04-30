@@ -12,33 +12,39 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        // Get unique departments dan positions untuk filter
-        $departments = User::distinct()->pluck('department');
-        $positions = User::distinct()->pluck('position');
+        // Get unique departments, positions, and companies for filter
+        $departments = User::distinct()->pluck('department')->filter();
+        $positions = User::distinct()->pluck('position')->filter();
+        $companies = User::distinct()->pluck('perusahaan')->filter(); // Add this line
 
-        // Build query dengan filter
+        // Build query with filter
         $users = User::query()
-            // Tambahkan filter pencarian
+            // Add filter for search
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('nik', 'like', "%{$search}%")
                         ->orWhere('position', 'like', "%{$search}%")
                         ->orWhere('department', 'like', "%{$search}%")
+                        ->orWhere('perusahaan', 'like', "%{$search}%") // Add this line
                         ->orWhere('login_token', 'like', "%{$search}%");
                 });
             })
-            // Filter existing
+            // Existing filters
             ->when($request->department, function ($query, $department) {
                 $query->where('department', $department);
             })
             ->when($request->position, function ($query, $position) {
                 $query->where('position', $position);
             })
+            // Add company filter
+            ->when($request->perusahaan, function ($query, $perusahaan) {
+                $query->where('perusahaan', $perusahaan);
+            })
             ->latest()
             ->paginate(10);
 
-        return view('admin.users.index', compact('users', 'departments', 'positions'));
+        return view('admin.users.index', compact('users', 'departments', 'positions', 'companies'));
     }
     public function create()
     {
@@ -52,6 +58,7 @@ class UserController extends Controller
             'nik' => 'required|string|unique:users',
             'position' => 'required|string|max:255',
             'department' => 'required|string|max:255',
+            'perusahaan' => 'nullable|string|max:255',
         ]);
 
         $user = User::create([
@@ -59,6 +66,7 @@ class UserController extends Controller
             'nik' => $validated['nik'],
             'position' => $validated['position'],
             'department' => $validated['department'],
+            'perusahaan' => $validated['perusahaan'],
             'email' => $validated['nik'] . '@dummy.com', // Email dummy
             'password' => bcrypt(Str::random(16)), // Password dummy
             'is_active' => true,
@@ -83,6 +91,7 @@ class UserController extends Controller
             'nik' => 'required|string|unique:users,nik,' . $user->id,
             'position' => 'required|string|max:255',
             'department' => 'required|string|max:255',
+            'perusahaan' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
 
@@ -139,9 +148,10 @@ class UserController extends Controller
             ->orWhere('nik', 'like', "%{$term}%")
             ->orWhere('position', 'like', "%{$term}%")
             ->orWhere('department', 'like', "%{$term}%")
+            ->orWhere('perusahaan', 'like', "%{$term}%") // Add this line
             ->orWhere('login_token', 'like', "%{$term}%")
             ->limit(10)
-            ->get(['id', 'name', 'nik', 'position', 'department', 'login_token']);
+            ->get(['id', 'name', 'nik', 'position', 'department', 'perusahaan', 'login_token']);
 
         return response()->json($users);
     }

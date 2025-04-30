@@ -54,25 +54,26 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $index => $userData) {
-            // Buat email standar dari nama (tanpa spasi, huruf kecil) + domain
+            // Create email from name (lowercase, no spaces) + domain
             $email = strtolower(str_replace(' ', '', $userData['name'])) . '@dummy.com';
 
-            // Buat NIK unik dengan format USR + nomor urut
+            // Create unique NIK with USR + sequential number
             $nik = 'USR' . str_pad($index + 1, 3, '0', STR_PAD_LEFT);
 
-            // Buat user dengan ID-Trainer (login_token) yang sudah digenerate
+            // Create user with login_token
             $user = User::create([
                 'name' => $userData['name'],
                 'email' => $email,
-                'password' => Hash::make(Str::random(16)), // Random password yang tidak dipakai
-                'nik' => $nik, // NIK unik
+                'password' => Hash::make(Str::random(16)), // Random password
+                'nik' => $nik,
                 'position' => $userData['position'],
                 'department' => $userData['department'],
+                'perusahaan' => 'PT AGTA MANDIRI KONSULTAN', // Set company name
                 'is_admin' => false,
                 'is_active' => true,
             ]);
 
-            // Generate ID-Trainer untuk login
+            // Generate login token
             $this->generateToken($user);
         }
     }

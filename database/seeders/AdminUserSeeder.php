@@ -17,6 +17,7 @@ class AdminUserSeeder extends Seeder
             'nik' => 'ADM001',
             'position' => 'IT Staff',
             'department' => 'IT',
+            'perusahaan' => 'WIG',
             'is_admin' => true,
             'is_active' => true,
             // Tidak perlu token dan pin untuk admin

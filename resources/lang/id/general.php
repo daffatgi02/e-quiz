@@ -78,4 +78,11 @@ return [
     'role' => 'Role',
     'select_all' => 'Pilih Semua',
     'clear' => 'batalkan',
+    'company' => 'Perusahaan',
+    'all_departments' => 'Semua Departemen',
+    'all_positions' => 'Semua Posisi',
+    'all_companies' => 'Semua Perusahaan',
+    'filter' => 'Filter',
+    'clear_filters' => 'Hapus Filter',
+
 ];

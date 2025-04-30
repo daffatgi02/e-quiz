@@ -78,4 +78,10 @@ return [
     'role' => 'Peran',
     'select_all' => 'Select All',
     'clear' => 'Clear',
+    'company' => 'Company',
+    'all_departments' => 'All Departments',
+    'all_positions' => 'All Positions',
+    'all_companies' => 'All Companies',
+    'filter' => 'Filter',
+    'clear_filters' => 'Clear Filters',
 ];

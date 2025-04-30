@@ -37,38 +37,48 @@
                                 <li>
                                     <h6 class="dropdown-header">Berdasarkan Filter Saat Ini</h6>
                                 </li>
-                                @if (request()->has('department') || request()->has('position') || request()->has('search'))
+                                @if (request()->has('department') || request()->has('position') || request()->has('perusahaan') || request()->has('search'))
                                     <li><a class="dropdown-item"
                                             href="{{ route('admin.tokens.download', [
                                                 'department' => request('department'),
                                                 'position' => request('position'),
+                                                'perusahaan' => request('perusahaan'),
                                                 'search' => request('search'),
                                             ]) }}">
                                             {{ request('department') ? 'Dept: ' . request('department') : '' }}
                                             {{ request('position') ? 'Posisi: ' . request('position') : '' }}
+                                            {{ request('perusahaan') ? 'Perusahaan: ' . request('perusahaan') : '' }}
                                             {{ request('search') ? 'Kata kunci: ' . request('search') : '' }}
                                         </a></li>
                                 @endif
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li>
+                                {{-- <li>
                                     <h6 class="dropdown-header">Berdasarkan Departemen</h6>
                                 </li>
                                 @foreach ($departments as $dept)
                                     <li><a class="dropdown-item"
                                             href="{{ route('admin.tokens.download', ['department' => $dept]) }}">{{ $dept }}</a>
                                     </li>
-                                @endforeach
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
+                                @endforeach --}}
+                                {{-- <li>
                                     <h6 class="dropdown-header">Berdasarkan Posisi</h6>
                                 </li>
                                 @foreach ($positions as $pos)
                                     <li><a class="dropdown-item"
                                             href="{{ route('admin.tokens.download', ['position' => $pos]) }}">{{ $pos }}</a>
+                                    </li>
+                                @endforeach --}}
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header">Berdasarkan Perusahaan</h6>
+                                </li>
+                                @foreach ($companies as $company)
+                                    <li><a class="dropdown-item"
+                                            href="{{ route('admin.tokens.download', ['perusahaan' => $company]) }}">{{ $company }}</a>
                                     </li>
                                 @endforeach
                             </ul>
@@ -90,7 +100,7 @@
                                         <i class="fas fa-search"></i>
                                     </span>
                                     <input type="text" name="search" id="liveSearch" class="form-control"
-                                        placeholder="Cari berdasarkan nama, NIK, posisi, atau departemen..."
+                                        placeholder="Cari berdasarkan nama, NIK, posisi, departemen, atau perusahaan..."
                                         value="{{ request('search') }}" autocomplete="off">
                                     @if (request('search'))
                                         <button type="button" id="clearSearch" class="btn btn-outline-secondary">
@@ -101,6 +111,46 @@
                                 <div id="searchResults"
                                     class="position-absolute bg-white shadow-sm rounded mt-1 w-100 d-none"
                                     style="z-index: 1000; max-height: 300px; overflow-y: auto;"></div>
+                            </div>
+
+                            <!-- Filter Fields -->
+                            <div class="col-md-12 mb-3">
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <select name="department" class="form-select">
+                                            <option value="">{{ __('general.all_departments') }}</option>
+                                            @foreach($departments as $dept)
+                                                <option value="{{ $dept }}" {{ request('department') == $dept ? 'selected' : '' }}>{{ $dept }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <select name="position" class="form-select">
+                                            <option value="">{{ __('general.all_positions') }}</option>
+                                            @foreach($positions as $pos)
+                                                <option value="{{ $pos }}" {{ request('position') == $pos ? 'selected' : '' }}>{{ $pos }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <select name="perusahaan" class="form-select">
+                                            <option value="">{{ __('general.all_companies') }}</option>
+                                            @foreach($companies as $company)
+                                                <option value="{{ $company }}" {{ request('perusahaan') == $company ? 'selected' : '' }}>{{ $company }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-filter me-1"></i> {{ __('general.filter') }}
+                                    </button>
+                                    @if(request()->anyFilled(['department', 'position', 'perusahaan', 'search']))
+                                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary ms-2">
+                                            <i class="fas fa-times me-1"></i> {{ __('general.clear_filters') }}
+                                        </a>
+                                    @endif
+                                </div>
                             </div>
 
                             <div class="card shadow">
@@ -121,6 +171,7 @@
                                                         <th>PIN Status</th>
                                                         <th>{{ __('general.department') }}</th>
                                                         <th>{{ __('general.position') }}</th>
+                                                        <th>{{ __('general.company') }}</th>
                                                         <th>{{ __('general.status') }}</th>
                                                         <th>{{ __('general.actions') }}</th>
                                                     </tr>
@@ -148,6 +199,7 @@
                                                             </td>
                                                             <td>{{ $user->department }}</td>
                                                             <td>{{ $user->position }}</td>
+                                                            <td>{{ $user->perusahaan ?? '-' }}</td>
                                                             <td>
                                                                 <span
                                                                     class="badge bg-{{ $user->is_active ? 'success' : 'danger' }}">
@@ -241,125 +293,129 @@
                                     </div>
                                 </div>
                             </div>
+                        </form>
                     </div>
                 </div>
             </div>
-            @push('scripts')
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const searchInput = document.getElementById('liveSearch');
-                        const searchResultsContainer = document.getElementById('searchResults');
-                        const searchForm = document.getElementById('searchFilterForm');
-                        const clearSearchBtn = document.getElementById('clearSearch');
-                        let searchTimeout;
+        </div>
+    </div>
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchInput = document.getElementById('liveSearch');
+                const searchResultsContainer = document.getElementById('searchResults');
+                const searchForm = document.getElementById('searchFilterForm');
+                const clearSearchBtn = document.getElementById('clearSearch');
+                let searchTimeout;
 
-                        // Live search as user types
-                        searchInput.addEventListener('input', function() {
-                            const searchTerm = this.value.trim();
+                // Live search as user types
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.trim();
 
-                            // Clear previous timeout
-                            clearTimeout(searchTimeout);
+                    // Clear previous timeout
+                    clearTimeout(searchTimeout);
 
-                            if (searchTerm.length < 2) {
-                                searchResultsContainer.classList.add('d-none');
-                                return;
-                            }
+                    if (searchTerm.length < 2) {
+                        searchResultsContainer.classList.add('d-none');
+                        return;
+                    }
 
-                            // Set a small delay to avoid too many requests
-                            searchTimeout = setTimeout(() => {
-                                fetchSearchResults(searchTerm);
-                            }, 300);
-                        });
+                    // Set a small delay to avoid too many requests
+                    searchTimeout = setTimeout(() => {
+                        fetchSearchResults(searchTerm);
+                    }, 300);
+                });
 
-                        // Focus out - hide results after a short delay (allows for clicking results)
-                        searchInput.addEventListener('blur', function() {
-                            setTimeout(() => {
-                                searchResultsContainer.classList.add('d-none');
-                            }, 200);
-                        });
+                // Focus out - hide results after a short delay (allows for clicking results)
+                searchInput.addEventListener('blur', function() {
+                    setTimeout(() => {
+                        searchResultsContainer.classList.add('d-none');
+                    }, 200);
+                });
 
-                        // Focus in - show results if we have a search term
-                        searchInput.addEventListener('focus', function() {
-                            if (this.value.trim().length >= 2) {
-                                fetchSearchResults(this.value.trim());
-                            }
-                        });
+                // Focus in - show results if we have a search term
+                searchInput.addEventListener('focus', function() {
+                    if (this.value.trim().length >= 2) {
+                        fetchSearchResults(this.value.trim());
+                    }
+                });
 
-                        // Clear search button
-                        if (clearSearchBtn) {
-                            clearSearchBtn.addEventListener('click', function() {
-                                searchInput.value = '';
-                                searchResultsContainer.classList.add('d-none');
-                                // Submit the form to reset search
-                                searchForm.submit();
-                            });
-                        }
-
-                        // Fetch search results with AJAX
-                        function fetchSearchResults(searchTerm) {
-                            fetch(`{{ route('admin.users.search') }}?term=${encodeURIComponent(searchTerm)}`)
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.length > 0) {
-                                        renderSearchResults(data);
-                                        searchResultsContainer.classList.remove('d-none');
-                                    } else {
-                                        searchResultsContainer.innerHTML =
-                                            `<div class="p-3 text-muted">Tidak ada hasil ditemukan</div>`;
-                                        searchResultsContainer.classList.remove('d-none');
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching search results:', error);
-                                });
-                        }
-
-                        // Render search results
-                        function renderSearchResults(results) {
-                            searchResultsContainer.innerHTML = '';
-
-                            results.forEach(user => {
-                                const resultItem = document.createElement('div');
-                                resultItem.className = 'p-2 search-result-item border-bottom';
-                                resultItem.style.cursor = 'pointer';
-
-                                resultItem.innerHTML = `
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <strong>${highlightMatch(user.name, searchInput.value)}</strong>
-                                <small class="d-block text-muted">NIK: ${highlightMatch(user.nik, searchInput.value)}</small>
-                            </div>
-                            <div class="text-end">
-                                <small class="badge bg-secondary">${highlightMatch(user.department, searchInput.value)}</small>
-                                <small class="d-block">${highlightMatch(user.position, searchInput.value)}</small>
-                            </div>
-                        </div>
-                    `;
-
-                                resultItem.addEventListener('click', function() {
-                                    window.location.href = "{{ route('admin.users.index') }}?search=" +
-                                        encodeURIComponent(user.name);
-                                });
-
-                                searchResultsContainer.appendChild(resultItem);
-                            });
-                        }
-
-                        // Highlight matching text
-                        function highlightMatch(text, query) {
-                            if (!text) return '';
-
-                            const regex = new RegExp(`(${query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
-                            return text.replace(regex, '<mark>$1</mark>');
-                        }
-
-                        // Make department and position filters submit the form on change
-                        document.querySelectorAll('select[name="department"], select[name="position"]').forEach(select => {
-                            select.addEventListener('change', function() {
-                                searchForm.submit();
-                            });
-                        });
+                // Clear search button
+                if (clearSearchBtn) {
+                    clearSearchBtn.addEventListener('click', function() {
+                        searchInput.value = '';
+                        searchResultsContainer.classList.add('d-none');
+                        // Submit the form to reset search
+                        searchForm.submit();
                     });
-                </script>
-            @endpush
-        @endsection
+                }
+
+                // Fetch search results with AJAX
+                function fetchSearchResults(searchTerm) {
+                    fetch(`{{ route('admin.users.search') }}?term=${encodeURIComponent(searchTerm)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.length > 0) {
+                                renderSearchResults(data);
+                                searchResultsContainer.classList.remove('d-none');
+                            } else {
+                                searchResultsContainer.innerHTML =
+                                    `<div class="p-3 text-muted">Tidak ada hasil ditemukan</div>`;
+                                searchResultsContainer.classList.remove('d-none');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching search results:', error);
+                        });
+                }
+
+                // Render search results
+                function renderSearchResults(results) {
+                    searchResultsContainer.innerHTML = '';
+
+                    results.forEach(user => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'p-2 search-result-item border-bottom';
+                        resultItem.style.cursor = 'pointer';
+
+                        resultItem.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <strong>${highlightMatch(user.name, searchInput.value)}</strong>
+                        <small class="d-block text-muted">NIK: ${highlightMatch(user.nik, searchInput.value)}</small>
+                        <small class="d-block text-muted">${highlightMatch(user.perusahaan || '-', searchInput.value)}</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="badge bg-secondary">${highlightMatch(user.department || '-', searchInput.value)}</small>
+                        <small class="d-block">${highlightMatch(user.position, searchInput.value)}</small>
+                    </div>
+                </div>
+            `;
+
+                        resultItem.addEventListener('click', function() {
+                            window.location.href = "{{ route('admin.users.index') }}?search=" +
+                                encodeURIComponent(user.name);
+                        });
+
+                        searchResultsContainer.appendChild(resultItem);
+                    });
+                }
+
+                // Highlight matching text
+                function highlightMatch(text, query) {
+                    if (!text) return '';
+
+                    const regex = new RegExp(`(${query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+                    return text.replace(regex, '<mark>$1</mark>');
+                }
+
+                // Make department, position, and company filters submit the form on change
+                document.querySelectorAll('select[name="department"], select[name="position"], select[name="perusahaan"]').forEach(select => {
+                    select.addEventListener('change', function() {
+                        searchForm.submit();
+                    });
+                });
+            });
+        </script>
+    @endpush
+@endsection
