@@ -18,10 +18,21 @@ class UserController extends Controller
 
         // Build query dengan filter
         $users = User::query()
-            ->when($request->department, function($query, $department) {
+            // Tambahkan filter pencarian
+            ->when($request->search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('nik', 'like', "%{$search}%")
+                        ->orWhere('position', 'like', "%{$search}%")
+                        ->orWhere('department', 'like', "%{$search}%")
+                        ->orWhere('login_token', 'like', "%{$search}%");
+                });
+            })
+            // Filter existing
+            ->when($request->department, function ($query, $department) {
                 $query->where('department', $department);
             })
-            ->when($request->position, function($query, $position) {
+            ->when($request->position, function ($query, $position) {
                 $query->where('position', $position);
             })
             ->latest()
@@ -29,7 +40,6 @@ class UserController extends Controller
 
         return view('admin.users.index', compact('users', 'departments', 'positions'));
     }
-
     public function create()
     {
         return view('admin.users.create');
@@ -116,5 +126,23 @@ class UserController extends Controller
         ];
 
         return view('admin.users.history', compact('user', 'attempts', 'statistics'));
+    }
+    public function search(Request $request)
+    {
+        $term = $request->term;
+
+        if (empty($term) || strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $users = User::where('name', 'like', "%{$term}%")
+            ->orWhere('nik', 'like', "%{$term}%")
+            ->orWhere('position', 'like', "%{$term}%")
+            ->orWhere('department', 'like', "%{$term}%")
+            ->orWhere('login_token', 'like', "%{$term}%")
+            ->limit(10)
+            ->get(['id', 'name', 'nik', 'position', 'department', 'login_token']);
+
+        return response()->json($users);
     }
 }

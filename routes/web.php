@@ -30,6 +30,7 @@ Route::get('language/{lang}', [LanguageController::class, 'switchLang'])->name('
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [ReportController::class, 'index'])->name('dashboard');
+    Route::get('users/search', [AdminUserController::class, 'search'])->name('users.search');
     // History per user
     Route::get('users/{user}/history', [AdminUserController::class, 'history'])->name('users.history');
     Route::get('quizzes/{quiz}/questions/export', [AdminQuestionController::class, 'exportQuestions'])->name('quizzes.questions.export');

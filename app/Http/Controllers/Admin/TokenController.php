@@ -29,10 +29,10 @@ class TokenController extends Controller
     public function downloadTokens(Request $request)
     {
         $users = User::query()
-            ->when($request->department, function($query, $department) {
+            ->when($request->department, function ($query, $department) {
                 $query->where('department', $department);
             })
-            ->when($request->position, function($query, $position) {
+            ->when($request->position, function ($query, $position) {
                 $query->where('position', $position);
             })
             ->whereNotNull('login_token')
