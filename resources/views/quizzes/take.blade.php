@@ -2,6 +2,63 @@
 @extends('layouts.app')
 
 @section('content')
+    @push('styles')
+        <style>
+            /* CSS lama tetap dipertahankan */
+            .question-nav-btn {
+                width: 40px;
+                height: 40px;
+                padding: 0;
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                background-color: #fff;
+            }
+
+            .question-nav-btn.answered {
+                background-color: #28a745;
+                color: white;
+                border-color: #28a745;
+            }
+
+            .question-nav-btn.marked {
+                background-color: #ffc107;
+                color: #000;
+                border-color: #ffc107;
+            }
+
+            .question-nav-btn.current {
+                border: 2px solid #007bff;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+            }
+
+            .question-card {
+                min-height: 300px;
+            }
+
+            .mark-question.active {
+                background-color: #ffc107;
+                border-color: #ffc107;
+                color: #000;
+            }
+
+            /* CSS baru untuk nomor pilihan */
+            .option-letter {
+                font-weight: bold;
+                min-width: 25px;
+                display: inline-block;
+            }
+
+            .option-content {
+                flex: 1;
+            }
+
+            .form-check-label {
+                display: flex !important;
+                align-items: flex-start !important;
+                width: 100%;
+            }
+        </style>
+    @endpush
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -54,21 +111,24 @@
                                     @endif
 
                                     @if ($question->type === 'multiple_choice')
-                                        @foreach ($question->options->sortBy('order') as $option)
+                                        @foreach ($question->options->sortBy('order') as $optionIndex => $option)
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" type="radio"
                                                     name="answers[{{ $question->id }}]" id="option-{{ $option->id }}"
                                                     value="{{ $option->id }}">
                                                 <label class="form-check-label d-flex align-items-start"
                                                     for="option-{{ $option->id }}">
-                                                    <span>{{ $option->option }}</span>
-                                                    @if ($option->image_path)
-                                                        <div class="option-image ms-3">
-                                                            <img src="{{ Storage::url($option->image_path) }}"
-                                                                class="img-fluid" alt="Option Image"
-                                                                style="max-height: 150px; object-fit: contain;">
-                                                        </div>
-                                                    @endif
+                                                    <div class="option-letter me-2">{{ chr(65 + $optionIndex) }}.</div>
+                                                    <div class="option-content">
+                                                        <span>{{ $option->option }}</span>
+                                                        @if ($option->image_path)
+                                                            <div class="option-image ms-3">
+                                                                <img src="{{ Storage::url($option->image_path) }}"
+                                                                    class="img-fluid" alt="Option Image"
+                                                                    style="max-height: 150px; object-fit: contain;">
+                                                            </div>
+                                                        @endif
+                                                    </div>
                                                 </label>
                                             </div>
                                         @endforeach
