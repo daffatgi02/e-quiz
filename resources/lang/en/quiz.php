@@ -144,5 +144,7 @@ return [
     'kicked_title' => 'You have been kicked',
     'kicked_by_admin' => 'You have been kicked from this quiz by an administrator.',
     'attempt_already_completed' => 'This quiz attempt has already been completed.',
-
+    'reset_all_attempts' => 'Reset All Attempts',
+    'confirm_reset_all_attempts' => 'Are you sure you want to reset ALL user attempts for this quiz? This action cannot be undone.',
+    'all_attempts_reset_success' => ':count attempts have been successfully reset.',
 ];

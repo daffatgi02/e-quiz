@@ -7,9 +7,19 @@
             <div class="col-md-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1>{{ __('quiz.tracking') }}: {{ $quiz->title }}</h1>
-                    <a href="{{ route('admin.quizzes.index') }}" class="btn btn-secondary">
-                        {{ __('general.back') }}
-                    </a>
+                    <div>
+                        @if($statistics['total_participants'] > 0)
+                            <form action="{{ route('admin.quizzes.reset-all-attempts', $quiz) }}" method="POST" class="d-inline" id="resetAllForm">
+                                @csrf
+                                <button type="button" class="btn btn-danger" id="resetAllBtn">
+                                    <i class="fas fa-trash"></i> {{ __('quiz.reset_all_attempts') }}
+                                </button>
+                            </form>
+                        @endif
+                        <a href="{{ route('admin.quizzes.index') }}" class="btn btn-secondary ms-2">
+                            {{ __('general.back') }}
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Summary Cards -->
@@ -215,6 +225,31 @@
             setInterval(function() {
                 location.reload();
             }, 30000);
+
+            // Reset All confirmation
+            document.addEventListener('DOMContentLoaded', function() {
+                const resetAllBtn = document.getElementById('resetAllBtn');
+                const resetAllForm = document.getElementById('resetAllForm');
+
+                if (resetAllBtn) {
+                    resetAllBtn.addEventListener('click', function() {
+                        Swal.fire({
+                            title: '{{ __("quiz.reset_all_attempts") }}',
+                            text: '{{ __("quiz.confirm_reset_all_attempts") }}',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: '{{ __("general.yes") }}',
+                            cancelButtonText: '{{ __("general.cancel") }}'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                resetAllForm.submit();
+                            }
+                        });
+                    });
+                }
+            });
         </script>
     @endpush
 @endsection

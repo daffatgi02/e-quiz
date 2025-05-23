@@ -144,4 +144,7 @@ return [
     'kicked_title' => 'Anda telah dikeluarkan',
     'kicked_by_admin' => 'Anda telah dikeluarkan dari quiz ini oleh administrator.',
     'attempt_already_completed' => 'Percobaan quiz ini telah selesai.',
+    'reset_all_attempts' => 'Reset Semua Percobaan',
+    'confirm_reset_all_attempts' => 'Apakah Anda yakin ingin mereset SEMUA percobaan peserta untuk kuis ini? Tindakan ini tidak dapat dibatalkan.',
+    'all_attempts_reset_success' => ':count percobaan berhasil direset.',
 ];

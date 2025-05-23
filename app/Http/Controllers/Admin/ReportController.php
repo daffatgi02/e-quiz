@@ -10,6 +10,7 @@ use App\Models\UserAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class ReportController extends Controller
 {
@@ -164,5 +165,109 @@ class ReportController extends Controller
         ]);
 
         return $pdf->download('quiz_' . $quiz->id . '_bulk_results.pdf');
+    }
+    public function exportTrainingReport(Request $request, $type)
+    {
+        try {
+            // Tentukan quiz berdasarkan tipe
+            if ($type == 'sanitasi') {
+                $preTest = Quiz::where('title', 'like', '%Pre Test Sanitasi%')->first();
+                $postTest = Quiz::where('title', 'like', '%Post Test Sanitasi%')->first();
+                $title = 'Sanitasi / Hygiene';
+            } elseif ($type == 'halal') {
+                $preTest = Quiz::where('title', 'like', '%Pre Test Training Halal%')->first();
+                $postTest = Quiz::where('title', 'like', '%Post Test Training Halal%')->first();
+                $title = 'Training Halal';
+            } else {
+                return redirect()->back()->with('error', 'Tipe laporan tidak valid');
+            }
+
+            if (!$preTest || !$postTest) {
+                return redirect()->back()->with('error', 'Quiz tidak ditemukan');
+            }
+
+            // Format tanggal dengan aman
+            $preTestDate = $preTest->start_date ? $preTest->start_date->format('d F Y') : 'Tidak tersedia';
+            $postTestDate = $postTest->start_date ? $postTest->start_date->format('d F Y') : 'Tidak tersedia';
+            $exportDate = now()->format('d F Y');
+
+            // Dapatkan semua user yang telah mengambil pre-test atau post-test
+            $preTestUserIds = QuizAttempt::where('quiz_id', $preTest->id)
+                ->where('status', 'graded')
+                ->pluck('user_id');
+
+            $postTestUserIds = QuizAttempt::where('quiz_id', $postTest->id)
+                ->where('status', 'graded')
+                ->pluck('user_id');
+
+            $userIds = $preTestUserIds->merge($postTestUserIds)->unique();
+
+            // Dapatkan data user
+            $users = User::whereIn('id', $userIds)->get();
+
+            // Siapkan data untuk report
+            $reportData = [];
+
+            foreach ($users as $index => $user) {
+                $preTestAttempt = QuizAttempt::where('quiz_id', $preTest->id)
+                    ->where('user_id', $user->id)
+                    ->where('status', 'graded')
+                    ->orderBy('score', 'desc') // Ambil yang tertinggi jika ada beberapa
+                    ->first();
+
+                $postTestAttempt = QuizAttempt::where('quiz_id', $postTest->id)
+                    ->where('user_id', $user->id)
+                    ->where('status', 'graded')
+                    ->orderBy('score', 'desc') // Ambil yang tertinggi jika ada beberapa
+                    ->first();
+
+                $preTestScore = $preTestAttempt ? $preTestAttempt->score : '-';
+                $postTestScore = $postTestAttempt ? $postTestAttempt->score : '-';
+
+                // Tentukan passing threshold berdasarkan posisi
+                $position = strtoupper($user->position);
+                $isLeadOrSupervisor = str_contains($position, 'LEAD') ||
+                    str_contains($position, 'SUPERVISOR') ||
+                    str_contains($position, 'SPV');
+
+                $passingScore = $isLeadOrSupervisor ? 80 : 70;
+
+                // Tentukan keterangan (hanya untuk post test)
+                $keterangan = '-';
+                if ($postTestScore !== '-') {
+                    $keterangan = $postTestScore >= $passingScore ? 'LULUS' : 'TIDAK LULUS';
+                }
+
+                $reportData[] = [
+                    'no' => $index + 1,
+                    'nik' => $user->nik,
+                    'name' => $user->name,
+                    'position' => $user->position,
+                    'pre_test_score' => $preTestScore,
+                    'post_test_score' => $postTestScore,
+                    'keterangan' => $keterangan
+                ];
+            }
+
+            // Load view untuk PDF
+            $pdf = PDF::loadView('admin.reports.training-pdf', [
+                'title' => $title,
+                'reportData' => $reportData,
+                'preTestDate' => $preTestDate,
+                'postTestDate' => $postTestDate,
+                'exportDate' => $exportDate
+            ]);
+
+            // Generate PDF filename dengan tanggal ekspor
+            $filename = 'laporan_training_' . Str::slug($title) . '_' . date('Ymd_His') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            // Log error untuk debugging
+            \Illuminate\Support\Facades\Log::error('Error generating training report: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error($e->getTraceAsString());
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 }

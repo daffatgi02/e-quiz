@@ -168,6 +168,14 @@ class QuizController extends Controller
         return redirect()->back()
             ->with('success', __('quiz.attempt_reset_success'));
     }
+    public function resetAllAttempts(Quiz $quiz)
+    {
+        // Delete all attempts for this quiz
+        $count = QuizAttempt::where('quiz_id', $quiz->id)->delete();
+
+        return redirect()->back()
+            ->with('success', __('quiz.all_attempts_reset_success', ['count' => $count]));
+    }
     public function track(Quiz $quiz)
     {
         // Hanya ambil attempts yang sudah ada
