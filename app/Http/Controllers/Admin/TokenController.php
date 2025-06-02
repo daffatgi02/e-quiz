@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class TokenController extends Controller
 {
@@ -18,12 +20,23 @@ class TokenController extends Controller
 
     public function resetPin(User $user)
     {
-        $user->update([
-            'pin' => null,
-            'pin_set' => false
-        ]);
+        try {
+            // Use DB transaction for safety
+            DB::transaction(function () use ($user) {
+                $user->update([
+                    'pin' => null,
+                    'pin_set' => false
+                ]);
+            });
 
-        return redirect()->back()->with('success', 'PIN berhasil direset');
+            // Log the action for debugging
+            Log::info("PIN reset for user {$user->id} ({$user->name}) by admin " . auth()->user()->id);
+
+            return redirect()->back()->with('success', 'PIN berhasil direset untuk ' . $user->name);
+        } catch (\Exception $e) {
+            Log::error("Failed to reset PIN for user {$user->id}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mereset PIN: ' . $e->getMessage());
+        }
     }
 
     public function downloadTokens(Request $request)

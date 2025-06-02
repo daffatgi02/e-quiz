@@ -11,28 +11,48 @@
                         {{ __('quiz.create') }}
                     </a>
                 </div>
-                <div class="dropdown d-inline-block">
-                    <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-file-export"></i> Export
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <!-- Existing items -->
 
-                        <!-- Add this new option -->
-                        <li>
-                            <a class="dropdown-item"
-                                href="{{ route('admin.reports.export.training', ['type' => 'sanitasi']) }}">
-                                <i class="fas fa-file-pdf"></i> Export Laporan Sanitasi
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item"
-                                href="{{ route('admin.reports.export.training', ['type' => 'halal']) }}">
-                                <i class="fas fa-file-pdf"></i> Export Laporan Halal
-                            </a>
-                        </li>
-                    </ul>
+                <!-- Export Options -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">{{ __('general.export') }} {{ __('general.reports') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <a href="{{ route('admin.reports.comparison.form') }}" class="btn btn-success">
+                                        <i class="fas fa-chart-line"></i> {{ __('general.training_comparison') }}
+                                    </a>
+                                    <small class="text-muted mt-1">Bandingkan hasil Pre Test vs Post Test</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="dropdown d-grid">
+                                    <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-file-export"></i> {{ __('general.export') }} Legacy
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end w-100">
+                                        <li>
+                                            <a class="dropdown-item"
+                                                href="{{ route('admin.reports.export.training.legacy', ['type' => 'sanitasi']) }}">
+                                                <i class="fas fa-file-pdf"></i> Export Laporan Sanitasi
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item"
+                                                href="{{ route('admin.reports.export.training.legacy', ['type' => 'halal']) }}">
+                                                <i class="fas fa-file-pdf"></i> Export Laporan Halal
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <small class="text-muted mt-1">Export untuk quiz sanitasi & halal (backward compatibility)</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="card">
                     <div class="card-body">
                         <table class="table">

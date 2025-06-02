@@ -84,5 +84,16 @@ return [
     'all_companies' => 'Semua Perusahaan',
     'filter' => 'Filter',
     'clear_filters' => 'Hapus Filter',
-
+    'not_available' => 'Tidak Tersedia',
+    'error_occurred' => 'Terjadi kesalahan',
+    'invalid_report_type' => 'Tipe laporan tidak valid',
+    'quiz_not_found' => 'Quiz tidak ditemukan',
+    'training_comparison' => 'Perbandingan Training',
+    'select_pre_test' => 'Pilih Pre Test',
+    'select_post_test' => 'Pilih Post Test',
+    'comparison_title' => 'Judul Perbandingan',
+    'generate_comparison' => 'Buat Perbandingan',
+    'pre_test_quiz' => 'Quiz Pre Test',
+    'post_test_quiz' => 'Quiz Post Test',
+    'training_title' => 'Judul Training',
 ];

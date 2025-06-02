@@ -57,6 +57,7 @@ class ReportController extends Controller
 
         return view('admin.reports.quiz', compact('quiz', 'attempts', 'statistics', 'passingScore'));
     }
+
     public function userReport(User $user)
     {
         $attempts = $user->quizAttempts()
@@ -129,12 +130,12 @@ class ReportController extends Controller
         return $pdf->download('quiz_' . $quiz->id . '_results_' . $lang . '.pdf');
     }
 
-
     public function attemptDetail(QuizAttempt $attempt)
     {
         $attempt->load(['quiz', 'user', 'answers.question.options', 'answers.questionOption']);
         return view('admin.reports.attempt-detail', compact('attempt'));
     }
+
     public function exportSingleAttempt(Request $request, QuizAttempt $attempt)
     {
         $lang = $request->get('lang', 'id');
@@ -149,7 +150,6 @@ class ReportController extends Controller
 
         return $pdf->download('quiz_' . $attempt->quiz->id . '_user_' . $attempt->user->id . '_result_' . $lang . '.pdf');
     }
-
 
     public function exportBulk(Request $request, Quiz $quiz)
     {
@@ -166,7 +166,180 @@ class ReportController extends Controller
 
         return $pdf->download('quiz_' . $quiz->id . '_bulk_results.pdf');
     }
-    public function exportTrainingReport(Request $request, $type)
+
+    // NEW METHOD - Show comparison form
+    public function showComparisonForm()
+    {
+        $quizzes = Quiz::orderBy('title', 'asc')->get();
+        return view('admin.reports.comparison-form', compact('quizzes'));
+    }
+
+    // UPDATED METHOD - Dynamic comparison export
+    public function exportTrainingReport(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'pre_test_quiz_id' => 'required|exists:quizzes,id',
+                'post_test_quiz_id' => 'required|exists:quizzes,id|different:pre_test_quiz_id',
+                'title' => 'required|string|max:255',
+                'lang' => 'sometimes|in:id,en'
+            ], [
+                'post_test_quiz_id.different' => 'Pre Test dan Post Test tidak boleh sama.',
+                'pre_test_quiz_id.required' => 'Pre Test quiz harus dipilih.',
+                'post_test_quiz_id.required' => 'Post Test quiz harus dipilih.',
+                'title.required' => 'Judul training harus diisi.'
+            ]);
+
+            $lang = $validated['lang'] ?? 'id';
+            app()->setLocale($lang);
+
+            $preTest = Quiz::findOrFail($validated['pre_test_quiz_id']);
+            $postTest = Quiz::findOrFail($validated['post_test_quiz_id']);
+            $title = $validated['title'];
+
+            // Debug: Log quiz information
+            \Log::info('Pre Test Quiz: ' . $preTest->title . ' (ID: ' . $preTest->id . ')');
+            \Log::info('Post Test Quiz: ' . $postTest->title . ' (ID: ' . $postTest->id . ')');
+
+            // Format tanggal dengan aman
+            $preTestDate = $preTest->start_date ? $preTest->start_date->format('d F Y') : __('general.not_available');
+            $postTestDate = $postTest->start_date ? $postTest->start_date->format('d F Y') : __('general.not_available');
+            $exportDate = now()->format('d F Y');
+
+            // Dapatkan semua user yang telah mengambil pre-test atau post-test
+            $preTestUserIds = QuizAttempt::where('quiz_id', $preTest->id)
+                ->whereIn('status', ['completed', 'graded']) // Include both completed and graded
+                ->pluck('user_id')
+                ->unique();
+
+            $postTestUserIds = QuizAttempt::where('quiz_id', $postTest->id)
+                ->whereIn('status', ['completed', 'graded']) // Include both completed and graded
+                ->pluck('user_id')
+                ->unique();
+
+            // Debug: Log user counts
+            \Log::info('Pre Test Users: ' . $preTestUserIds->count());
+            \Log::info('Post Test Users: ' . $postTestUserIds->count());
+
+            $userIds = $preTestUserIds->merge($postTestUserIds)->unique();
+            \Log::info('Total Unique Users: ' . $userIds->count());
+
+            // Dapatkan data user
+            $users = User::whereIn('id', $userIds)->orderBy('name')->get();
+
+            // Debug: Log users found
+            \Log::info('Users found: ' . $users->count());
+
+            // Siapkan data untuk report
+            $reportData = [];
+
+            foreach ($users as $index => $user) {
+                // Get best attempt for pre-test
+                $preTestAttempt = QuizAttempt::where('quiz_id', $preTest->id)
+                    ->where('user_id', $user->id)
+                    ->whereIn('status', ['completed', 'graded'])
+                    ->orderBy('score', 'desc') // Ambil yang tertinggi
+                    ->orderBy('completed_at', 'desc') // Jika score sama, ambil yang terbaru
+                    ->first();
+
+                // Get best attempt for post-test
+                $postTestAttempt = QuizAttempt::where('quiz_id', $postTest->id)
+                    ->where('user_id', $user->id)
+                    ->whereIn('status', ['completed', 'graded'])
+                    ->orderBy('score', 'desc') // Ambil yang tertinggi
+                    ->orderBy('completed_at', 'desc') // Jika score sama, ambil yang terbaru
+                    ->first();
+
+                $preTestScore = $preTestAttempt ? $preTestAttempt->score : '-';
+                $postTestScore = $postTestAttempt ? $postTestAttempt->score : '-';
+
+                // Debug specific user
+                if ($index < 3) { // Log first 3 users for debugging
+                    \Log::info("User: {$user->name} - Pre: {$preTestScore} - Post: {$postTestScore}");
+                }
+
+                // Tentukan passing threshold berdasarkan posisi
+                $position = strtoupper($user->position ?? '');
+                $isLeadOrSupervisor = str_contains($position, 'LEAD') ||
+                    str_contains($position, 'SUPERVISOR') ||
+                    str_contains($position, 'SPV') ||
+                    str_contains($position, 'MANAGER');
+
+                $passingScore = $isLeadOrSupervisor ? 80 : 70;
+
+                // Tentukan keterangan (hanya untuk post test)
+                $keterangan = '-';
+                if ($postTestScore !== '-' && is_numeric($postTestScore)) {
+                    $keterangan = $postTestScore >= $passingScore ?
+                        ($lang == 'en' ? 'PASSED' : 'LULUS') : ($lang == 'en' ? 'FAILED' : 'TIDAK LULUS');
+                }
+
+                $reportData[] = [
+                    'no' => $index + 1,
+                    'nik' => $user->nik ?? '-',
+                    'name' => $user->name,
+                    'position' => $user->position ?? '-',
+                    'department' => $user->department ?? '-',
+                    'company' => $user->perusahaan ?? '-',
+                    'pre_test_score' => $preTestScore,
+                    'post_test_score' => $postTestScore,
+                    'keterangan' => $keterangan,
+                    'passing_score' => $passingScore
+                ];
+            }
+
+            // Debug: Log report data count
+            \Log::info('Report data count: ' . count($reportData));
+
+            // If no data found, create a sample entry for debugging
+            if (empty($reportData)) {
+                \Log::warning('No data found for report');
+
+                // Check if there are any quiz attempts at all
+                $allPreAttempts = QuizAttempt::where('quiz_id', $preTest->id)->count();
+                $allPostAttempts = QuizAttempt::where('quiz_id', $postTest->id)->count();
+
+                \Log::info("All Pre Test attempts: $allPreAttempts");
+                \Log::info("All Post Test attempts: $allPostAttempts");
+
+                return redirect()->back()->with(
+                    'error',
+                    'Tidak ada data yang ditemukan untuk quiz yang dipilih. ' .
+                        "Pre Test attempts: $allPreAttempts, Post Test attempts: $allPostAttempts"
+                );
+            }
+
+            // Load view untuk PDF
+            $pdf = PDF::loadView('admin.reports.training-pdf', [
+                'title' => $title,
+                'reportData' => $reportData,
+                'preTestDate' => $preTestDate,
+                'postTestDate' => $postTestDate,
+                'exportDate' => $exportDate,
+                'preTestTitle' => $preTest->title,
+                'postTestTitle' => $postTest->title,
+                'lang' => $lang,
+                'totalUsers' => count($reportData)
+            ]);
+
+            // Set paper size and orientation
+            $pdf->setPaper('A4', 'landscape');
+
+            // Generate PDF filename dengan tanggal ekspor
+            $filename = 'laporan_training_' . Str::slug($title) . '_' . date('Ymd_His') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            // Log error untuk debugging
+            \Log::error('Error generating training report: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    // LEGACY METHOD - Keep for backward compatibility
+    public function exportTrainingReportLegacy(Request $request, $type)
     {
         try {
             // Tentukan quiz berdasarkan tipe
@@ -179,95 +352,22 @@ class ReportController extends Controller
                 $postTest = Quiz::where('title', 'like', '%Post Test Training Halal%')->first();
                 $title = 'Training Halal';
             } else {
-                return redirect()->back()->with('error', 'Tipe laporan tidak valid');
+                return redirect()->back()->with('error', __('general.invalid_report_type'));
             }
 
             if (!$preTest || !$postTest) {
-                return redirect()->back()->with('error', 'Quiz tidak ditemukan');
+                return redirect()->back()->with('error', __('general.quiz_not_found'));
             }
 
-            // Format tanggal dengan aman
-            $preTestDate = $preTest->start_date ? $preTest->start_date->format('d F Y') : 'Tidak tersedia';
-            $postTestDate = $postTest->start_date ? $postTest->start_date->format('d F Y') : 'Tidak tersedia';
-            $exportDate = now()->format('d F Y');
-
-            // Dapatkan semua user yang telah mengambil pre-test atau post-test
-            $preTestUserIds = QuizAttempt::where('quiz_id', $preTest->id)
-                ->where('status', 'graded')
-                ->pluck('user_id');
-
-            $postTestUserIds = QuizAttempt::where('quiz_id', $postTest->id)
-                ->where('status', 'graded')
-                ->pluck('user_id');
-
-            $userIds = $preTestUserIds->merge($postTestUserIds)->unique();
-
-            // Dapatkan data user
-            $users = User::whereIn('id', $userIds)->get();
-
-            // Siapkan data untuk report
-            $reportData = [];
-
-            foreach ($users as $index => $user) {
-                $preTestAttempt = QuizAttempt::where('quiz_id', $preTest->id)
-                    ->where('user_id', $user->id)
-                    ->where('status', 'graded')
-                    ->orderBy('score', 'desc') // Ambil yang tertinggi jika ada beberapa
-                    ->first();
-
-                $postTestAttempt = QuizAttempt::where('quiz_id', $postTest->id)
-                    ->where('user_id', $user->id)
-                    ->where('status', 'graded')
-                    ->orderBy('score', 'desc') // Ambil yang tertinggi jika ada beberapa
-                    ->first();
-
-                $preTestScore = $preTestAttempt ? $preTestAttempt->score : '-';
-                $postTestScore = $postTestAttempt ? $postTestAttempt->score : '-';
-
-                // Tentukan passing threshold berdasarkan posisi
-                $position = strtoupper($user->position);
-                $isLeadOrSupervisor = str_contains($position, 'LEAD') ||
-                    str_contains($position, 'SUPERVISOR') ||
-                    str_contains($position, 'SPV');
-
-                $passingScore = $isLeadOrSupervisor ? 80 : 70;
-
-                // Tentukan keterangan (hanya untuk post test)
-                $keterangan = '-';
-                if ($postTestScore !== '-') {
-                    $keterangan = $postTestScore >= $passingScore ? 'LULUS' : 'TIDAK LULUS';
-                }
-
-                $reportData[] = [
-                    'no' => $index + 1,
-                    'nik' => $user->nik,
-                    'name' => $user->name,
-                    'position' => $user->position,
-                    'pre_test_score' => $preTestScore,
-                    'post_test_score' => $postTestScore,
-                    'keterangan' => $keterangan
-                ];
-            }
-
-            // Load view untuk PDF
-            $pdf = PDF::loadView('admin.reports.training-pdf', [
+            // Use the new dynamic method
+            return $this->exportTrainingReport(new Request([
+                'pre_test_quiz_id' => $preTest->id,
+                'post_test_quiz_id' => $postTest->id,
                 'title' => $title,
-                'reportData' => $reportData,
-                'preTestDate' => $preTestDate,
-                'postTestDate' => $postTestDate,
-                'exportDate' => $exportDate
-            ]);
-
-            // Generate PDF filename dengan tanggal ekspor
-            $filename = 'laporan_training_' . Str::slug($title) . '_' . date('Ymd_His') . '.pdf';
-
-            return $pdf->download($filename);
+                'lang' => $request->get('lang', 'id')
+            ]));
         } catch (\Exception $e) {
-            // Log error untuk debugging
-            \Illuminate\Support\Facades\Log::error('Error generating training report: ' . $e->getMessage());
-            \Illuminate\Support\Facades\Log::error($e->getTraceAsString());
-
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect()->back()->with('error', __('general.error_occurred') . ': ' . $e->getMessage());
         }
     }
 }

@@ -57,7 +57,6 @@
                                 <h5>{{ __('general.details') }}</h5>
                                 <table class="table table-borderless">
                                     <tr>
-                                        {{-- resources/views/admin/quizzes/show.blade.php (lanjutan) --}}
                                         <th>{{ __('general.description') }}:</th>
                                         <td>{{ $quiz->description }}</td>
                                     </tr>
@@ -95,7 +94,6 @@
                                             </td>
                                         </tr>
                                     @endif
-                                    <tr>
                                     <tr>
                                         <th>{{ __('general.status') }}:</th>
                                         <td>
@@ -168,33 +166,70 @@
                                     </div>
                                 </div>
                                 <div class="card-body">
+                                    {{-- Display question image if exists --}}
+                                    @if ($question->image_path)
+                                        <div class="question-image mb-3">
+                                            <img src="{{ Storage::url($question->image_path) }}" class="img-fluid" 
+                                                 alt="Question Image" style="max-height: 300px; object-fit: contain;">
+                                        </div>
+                                    @endif
+
                                     @if ($question->type === 'multiple_choice')
-                                        <ul class="list-group">
-                                            @foreach ($question->options as $option)
-                                                <li
-                                                    class="list-group-item {{ $option->is_correct ? 'list-group-item-success' : '' }}">
-                                                    {{ $option->option }}
-                                                    @if ($option->is_correct)
-                                                        <span
-                                                            class="badge bg-success float-end">{{ __('quiz.correct_answer') }}</span>
-                                                    @endif
-                                                </li>
+                                        <div class="options-list">
+                                            @foreach ($question->options->sortBy('order') as $optionIndex => $option)
+                                                <div class="option-item mb-2 {{ $option->is_correct ? 'correct-option' : '' }}">
+                                                    <div class="d-flex align-items-start">
+                                                        <div class="option-letter me-3">
+                                                            <span class="badge bg-{{ $option->is_correct ? 'success' : 'light text-dark' }} fs-6">
+                                                                {{ chr(65 + $optionIndex) }}.
+                                                            </span>
+                                                        </div>
+                                                        <div class="option-content flex-grow-1">
+                                                            <div class="option-text">
+                                                                {{ $option->option }}
+                                                            </div>
+                                                            {{-- Display option image if exists --}}
+                                                            @if ($option->image_path)
+                                                                <div class="option-image mt-2">
+                                                                    <img src="{{ Storage::url($option->image_path) }}" 
+                                                                         class="img-thumbnail" alt="Option Image" 
+                                                                         style="max-height: 150px; max-width: 200px; object-fit: contain;">
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                        <div class="option-status ms-2">
+                                                            @if ($option->is_correct)
+                                                                <span class="badge bg-success">
+                                                                    <i class="fas fa-check"></i> {{ __('quiz.correct_answer') }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             @endforeach
-                                        </ul>
+                                        </div>
                                     @else
-                                        <p>{{ __('quiz.essay') }}</p>
-                                        @if ($question->requires_manual_grading)
-                                            <span class="badge bg-warning">{{ __('quiz.manual_grading') }}</span>
-                                        @endif
+                                        <div class="essay-question">
+                                            <p class="text-muted">{{ __('quiz.essay') }}</p>
+                                            @if ($question->requires_manual_grading)
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-user-edit"></i> {{ __('quiz.manual_grading') }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     @endif
                                 </div>
                             </div>
                         @empty
                             <div class="text-center py-5">
-                                <h4>{{ __('quiz.no_questions') }}</h4>
+                                <div class="mb-3">
+                                    <i class="fas fa-question-circle fa-3x text-muted"></i>
+                                </div>
+                                <h4 class="text-muted">{{ __('quiz.no_questions') }}</h4>
+                                <p class="text-muted">Belum ada pertanyaan untuk quiz ini</p>
                                 <a href="{{ route('admin.quizzes.questions.create', $quiz) }}"
                                     class="btn btn-primary mt-3">
-                                    {{ __('quiz.add_question') }}
+                                    <i class="fas fa-plus"></i> {{ __('quiz.add_question') }}
                                 </a>
                             </div>
                         @endforelse
@@ -203,4 +238,58 @@
             </div>
         </div>
     </div>
+
+    @push('styles')
+    <style>
+        .option-item {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s ease;
+        }
+        
+        .option-item:hover {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        
+        .option-item.correct-option {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .option-letter {
+            min-width: 35px;
+        }
+        
+        .option-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .question-image img,
+        .option-image img {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .essay-question {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+        }
+        
+        .options-list {
+            background-color: #fdfdfd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+        }
+    </style>
+    @endpush
 @endsection

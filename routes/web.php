@@ -56,8 +56,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('reports/export/attempt/{attempt}', [ReportController::class, 'exportSingleAttempt'])->name('reports.export.attempt');
     Route::get('reports/export/training/{type}', [App\Http\Controllers\Admin\ReportController::class, 'exportTrainingReport'])
         ->name('reports.export.training');
+    Route::get('reports/export/training/{type}', [ReportController::class, 'exportTrainingReportLegacy'])->name('reports.export.training.legacy');
 
-
+    Route::get('reports/comparison', [ReportController::class, 'showComparisonForm'])->name('reports.comparison.form');
+    Route::post('reports/export/training/dynamic', [ReportController::class, 'exportTrainingReport'])->name('reports.export.training.dynamic');
     // Fix route bulk export - seharusnya di dalam group admin dan dengan parameter quiz
     Route::post('reports/export/bulk/{quiz}', [ReportController::class, 'exportBulk'])->name('reports.export.bulk');
     Route::get('quizzes/{quiz}/track', [AdminQuizController::class, 'track'])->name('quizzes.track');

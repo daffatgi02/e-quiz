@@ -33,6 +33,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'pin', // Hide PIN from JSON responses
     ];
 
     protected $casts = [
@@ -48,7 +49,7 @@ class User extends Authenticatable
         return $this->hasMany(QuizAttempt::class);
     }
 
-    // Tambahkan method untuk generate token
+    // Generate token method
     public function generateToken()
     {
         $this->login_token = strtoupper(Str::random(8));
@@ -57,7 +58,7 @@ class User extends Authenticatable
         return $this->login_token;
     }
 
-    // Method untuk set PIN
+    // Set PIN method
     public function setPin($pin)
     {
         $this->pin = Hash::make($pin);
@@ -65,9 +66,24 @@ class User extends Authenticatable
         $this->save();
     }
 
-    // Method untuk verifikasi PIN
+    // Verify PIN method
     public function verifyPin($pin)
     {
         return Hash::check($pin, $this->pin);
+    }
+
+    // Reset PIN method
+    public function resetPin()
+    {
+        $this->pin = null;
+        $this->pin_set = false;
+        $this->save();
+        return true;
+    }
+
+    // Check if PIN is set
+    public function hasPinSet()
+    {
+        return $this->pin_set && !is_null($this->pin);
     }
 }
