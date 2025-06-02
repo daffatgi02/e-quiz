@@ -147,4 +147,9 @@ return [
     'reset_all_attempts' => 'Reset Semua Percobaan',
     'confirm_reset_all_attempts' => 'Apakah Anda yakin ingin mereset SEMUA percobaan peserta untuk kuis ini? Tindakan ini tidak dapat dibatalkan.',
     'all_attempts_reset_success' => ':count percobaan berhasil direset.',
+    'saving' => 'Menyimpan',
+    'saved' => 'Tersimpan',
+    'answer_saved' => 'Jawaban tersimpan',
+    'answer_not_saved' => 'Gagal menyimpan jawaban',
+    'continue_from_saved' => 'Melanjutkan dari terakhir tersimpan',
 ];

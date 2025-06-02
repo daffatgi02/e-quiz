@@ -123,6 +123,9 @@ class QuizAttemptController extends Controller
         $quiz = $attempt->quiz;
         $questions = $quiz->questions()->with('options')->get();
 
+        // Load existing answers for this attempt
+        $savedAnswers = $attempt->answers()->with(['question', 'questionOption'])->get();
+
         // Calculate remaining time
         $endTime = $attempt->started_at->addMinutes($quiz->duration);
         $remainingSeconds = now()->diffInSeconds($endTime, false);
@@ -132,7 +135,7 @@ class QuizAttemptController extends Controller
             return redirect()->route('quiz.result', $attempt);
         }
 
-        return view('quizzes.take', compact('attempt', 'quiz', 'questions', 'remainingSeconds'));
+        return view('quizzes.take', compact('attempt', 'quiz', 'questions', 'remainingSeconds', 'savedAnswers'));
     }
 
     // app/Http/Controllers/QuizAttemptController.php

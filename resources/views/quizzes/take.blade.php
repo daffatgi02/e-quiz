@@ -1,64 +1,93 @@
-{{-- resources/views/quizzes/take.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
-    @push('styles')
-        <style>
-            /* CSS lama tetap dipertahankan */
-            .question-nav-btn {
-                width: 40px;
-                height: 40px;
-                padding: 0;
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                background-color: #fff;
-            }
+    <style>
+        .question-nav-btn {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            font-weight: bold;
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+        }
 
-            .question-nav-btn.answered {
-                background-color: #28a745;
-                color: white;
-                border-color: #28a745;
-            }
+        .question-nav-btn.answered {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
 
-            .question-nav-btn.marked {
-                background-color: #ffc107;
-                color: #000;
-                border-color: #ffc107;
-            }
+        .question-nav-btn.marked {
+            background-color: #ffc107;
+            color: #000;
+            border-color: #ffc107;
+        }
 
-            .question-nav-btn.current {
-                border: 2px solid #007bff;
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-            }
+        .question-nav-btn.current {
+            border: 2px solid #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+        }
 
-            .question-card {
-                min-height: 300px;
-            }
+        .question-card {
+            min-height: 300px;
+        }
 
-            .mark-question.active {
-                background-color: #ffc107;
-                border-color: #ffc107;
-                color: #000;
-            }
+        .mark-question.active {
+            background-color: #ffc107;
+            border-color: #ffc107;
+            color: #000;
+        }
+        
+        /* Option styling */
+        .option-letter {
+            font-weight: bold;
+            min-width: 25px;
+            display: inline-block;
+        }
 
-            /* CSS baru untuk nomor pilihan */
-            .option-letter {
-                font-weight: bold;
-                min-width: 25px;
-                display: inline-block;
-            }
+        .option-content {
+            flex: 1;
+        }
 
-            .option-content {
-                flex: 1;
-            }
-
-            .form-check-label {
-                display: flex !important;
-                align-items: flex-start !important;
-                width: 100%;
-            }
-        </style>
-    @endpush
+        .form-check-label {
+            display: flex !important;
+            align-items: flex-start !important;
+            width: 100%;
+        }
+        
+        /* Auto-save indicator styles */
+        .autosave-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1050;
+        }
+        
+        .autosave-indicator.show {
+            opacity: 1;
+        }
+        
+        .autosave-indicator.saving {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .autosave-indicator.saved {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .autosave-indicator.error {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+    
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -93,7 +122,7 @@
 
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <h6 class="mb-0">{{ __('quiz.question') }} {{ $index + 1 }}
-                                            {{ __('of') }} {{ $questions->count() }}</h6>
+                                            {{ __('quiz.of') }} {{ $questions->count() }}</h6>
                                         <button type="button" class="btn btn-sm btn-outline-warning mark-question"
                                             data-question="{{ $index }}">
                                             <i class="fas fa-bookmark"></i>
@@ -112,10 +141,14 @@
 
                                     @if ($question->type === 'multiple_choice')
                                         @foreach ($question->options->sortBy('order') as $optionIndex => $option)
+                                            @php
+                                                $savedAnswer = isset($savedAnswers) ? $savedAnswers->where('question_id', $question->id)->first() : null;
+                                                $isChecked = $savedAnswer && $savedAnswer->question_option_id == $option->id;
+                                            @endphp
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" type="radio"
                                                     name="answers[{{ $question->id }}]" id="option-{{ $option->id }}"
-                                                    value="{{ $option->id }}">
+                                                    value="{{ $option->id }}" {{ $isChecked ? 'checked' : '' }}>
                                                 <label class="form-check-label d-flex align-items-start"
                                                     for="option-{{ $option->id }}">
                                                     <div class="option-letter me-2">{{ chr(65 + $optionIndex) }}.</div>
@@ -133,8 +166,12 @@
                                             </div>
                                         @endforeach
                                     @else
+                                        @php
+                                            $savedAnswer = isset($savedAnswers) ? $savedAnswers->where('question_id', $question->id)->first() : null;
+                                            $essayValue = $savedAnswer ? $savedAnswer->essay_answer : '';
+                                        @endphp
                                         <textarea class="form-control" name="answers[{{ $question->id }}]" rows="4"
-                                            placeholder="{{ __('quiz.essay_answer') }}"></textarea>
+                                            placeholder="{{ __('quiz.essay_answer') }}">{{ $essayValue }}</textarea>
                                     @endif
                                 </div>
                             @endforeach
@@ -176,47 +213,10 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Auto-save indicator -->
+        <div class="autosave-indicator" id="autosave-indicator"></div>
     </div>
-
-    @push('styles')
-        <style>
-            .question-nav-btn {
-                width: 40px;
-                height: 40px;
-                padding: 0;
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                background-color: #fff;
-            }
-
-            .question-nav-btn.answered {
-                background-color: #28a745;
-                color: white;
-                border-color: #28a745;
-            }
-
-            .question-nav-btn.marked {
-                background-color: #ffc107;
-                color: #000;
-                border-color: #ffc107;
-            }
-
-            .question-nav-btn.current {
-                border: 2px solid #007bff;
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-            }
-
-            .question-card {
-                min-height: 300px;
-            }
-
-            .mark-question.active {
-                background-color: #ffc107;
-                border-color: #ffc107;
-                color: #000;
-            }
-        </style>
-    @endpush
 
     @push('scripts')
         <script>
@@ -226,6 +226,7 @@
                 let currentQuestion = 0;
                 let answeredQuestions = new Set();
                 let markedQuestions = new Set();
+                const autosaveIndicator = document.getElementById('autosave-indicator');
 
                 // Show first question
                 showQuestion(0);
@@ -258,22 +259,104 @@
                     });
                 });
 
-                // Answer change handlers
-                document.querySelectorAll('input[type="radio"], textarea').forEach(element => {
-                    element.addEventListener('change', () => {
-                        const questionCard = element.closest('.question-card');
-                        const questionIndex = parseInt(questionCard.dataset.questionIndex);
-                        checkAndMarkAnswered(questionIndex);
-                    });
-
-                    element.addEventListener('input', () => {
-                        if (element.tagName === 'TEXTAREA') {
-                            const questionCard = element.closest('.question-card');
+                // Auto-save functionality
+                let saveTimeout;
+                
+                // Initialize input event listeners for auto-save
+                initializeAutoSave();
+                
+                function initializeAutoSave() {
+                    // For multiple choice questions (radio buttons)
+                    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const questionCard = this.closest('.question-card');
+                            const questionId = questionCard.dataset.questionId;
                             const questionIndex = parseInt(questionCard.dataset.questionIndex);
+                            
+                            // Mark as answered in UI
                             checkAndMarkAnswered(questionIndex);
-                        }
+                            
+                            // Save the answer
+                            autoSaveAnswer(questionId, this.value);
+                        });
                     });
-                });
+                    
+                    // For essay questions (textareas)
+                    document.querySelectorAll('textarea').forEach(textarea => {
+                        textarea.addEventListener('input', function() {
+                            const questionCard = this.closest('.question-card');
+                            const questionId = questionCard.dataset.questionId;
+                            const questionIndex = parseInt(questionCard.dataset.questionIndex);
+                            
+                            clearTimeout(saveTimeout);
+                            saveTimeout = setTimeout(() => {
+                                // Only save if there's actual content
+                                if (this.value.trim() !== '') {
+                                    checkAndMarkAnswered(questionIndex);
+                                    autoSaveAnswer(questionId, this.value);
+                                } else {
+                                    // If textarea is emptied, update the answered state
+                                    answeredQuestions.delete(questionIndex);
+                                    const navBtn = document.querySelector(`.question-nav-btn[data-question="${questionIndex}"]`);
+                                    navBtn.classList.remove('answered');
+                                    updateSummary();
+                                }
+                            }, 1000); // Save after 1 second of typing pause
+                        });
+                    });
+                }
+                
+                function autoSaveAnswer(questionId, value) {
+                    showAutosaveIndicator('saving');
+                    
+                    const formData = new FormData();
+                    formData.append('attempt_id', '{{ $attempt->id }}');
+                    formData.append('question_id', questionId);
+                    formData.append('answer', value);
+                    
+                    fetch('{{ route('quiz.save-answer') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAutosaveIndicator('saved');
+                        } else {
+                            showAutosaveIndicator('error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error saving answer:', error);
+                        showAutosaveIndicator('error');
+                    });
+                }
+                
+                function showAutosaveIndicator(status) {
+                    autosaveIndicator.className = 'autosave-indicator';
+                    
+                    if (status === 'saving') {
+                        autosaveIndicator.textContent = '⏳ {{ __("quiz.saving") }}...';
+                        autosaveIndicator.classList.add('saving');
+                    } else if (status === 'saved') {
+                        autosaveIndicator.textContent = '✓ {{ __("quiz.saved") }}';
+                        autosaveIndicator.classList.add('saved');
+                    } else if (status === 'error') {
+                        autosaveIndicator.textContent = '❌ {{ __("quiz.answer_not_saved") }}';
+                        autosaveIndicator.classList.add('error');
+                    }
+                    
+                    autosaveIndicator.classList.add('show');
+                    
+                    // Hide indicator after 2 seconds
+                    setTimeout(() => {
+                        autosaveIndicator.classList.remove('show');
+                    }, 2000);
+                }
 
                 // Submit button handler
                 document.getElementById('submit-btn').addEventListener('click', () => {
@@ -304,6 +387,14 @@
                         btn.classList.remove('current');
                     });
                     document.querySelector(`.question-nav-btn[data-question="${index}"]`).classList.add('current');
+                    
+                    // Update mark button state
+                    const markBtn = document.querySelector(`.mark-question[data-question="${index}"]`);
+                    if (markedQuestions.has(index)) {
+                        markBtn.classList.add('active');
+                    } else {
+                        markBtn.classList.remove('active');
+                    }
                 }
 
                 function checkAndMarkAnswered(questionIndex) {
@@ -442,56 +533,57 @@
                 }
 
                 updateTimer();
-
-                // Auto-save functionality
-                const form = document.getElementById('quiz-form');
-                let saveTimeout;
-
-                form.addEventListener('change', function(e) {
-                    clearTimeout(saveTimeout);
-                    saveTimeout = setTimeout(() => {
-                        const formData = new FormData(form);
-                        formData.append('attempt_id', '{{ $attempt->id }}');
-
-                        fetch('{{ route('quiz.save-answer') }}', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Accept': 'application/json',
-                            },
-                            body: formData
-                        }).then(response => {
-                            if (response.ok) {
-                                // Optional: Show auto-save success toast
-                                const Toast = Swal.mixin({
-                                    toast: true,
-                                    position: 'bottom-end',
-                                    showConfirmButton: false,
-                                    timer: 1000,
-                                    timerProgressBar: true,
-                                    didOpen: (toast) => {
-                                        toast.addEventListener('mouseenter', Swal
-                                            .stopTimer)
-                                        toast.addEventListener('mouseleave', Swal
-                                            .resumeTimer)
-                                    }
-                                });
-
-                                Toast.fire({
-                                    icon: 'success',
-                                    title: 'Jawaban tersimpan otomatis'
-                                });
+                
+                // Initialize saved answers
+                // FIX: Perbaikan syntax error - definisi questionIndex ganda
+                @if(isset($savedAnswers) && $savedAnswers->count() > 0)
+                    @foreach($savedAnswers as $answer)
+                        @if(($answer->question_option_id || ($answer->essay_answer && !empty($answer->essay_answer))))
+                            try {
+                                const questionElement = document.querySelector(`.question-card[data-question-id="{{ $answer->question_id }}"]`);
+                                if (questionElement) {
+                                    const qIndex = parseInt(questionElement.dataset.questionIndex);
+                                    answeredQuestions.add(qIndex);
+                                    document.querySelector(`.question-nav-btn[data-question="${qIndex}"]`).classList.add('answered');
+                                }
+                            } catch(e) {
+                                console.error('Error processing saved answer:', e);
                             }
-                        });
-                    }, 1000);
+                        @endif
+                    @endforeach
+                    updateSummary();
+                    
+                    // Show a toast notification that answers were loaded
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                    
+                    Toast.fire({
+                        icon: 'info',
+                        title: '{{ __("quiz.continue_from_saved") }}'
+                    });
+                @endif
+                
+                // Add "before unload" warning to prevent accidental closing
+                window.addEventListener('beforeunload', function(e) {
+                    // If all questions are answered, don't show warning
+                    if (answeredQuestions.size === questions) return;
+                    
+                    // Otherwise show warning
+                    e.preventDefault();
+                    e.returnValue = ''; // Chrome requires returnValue to be set
+                    return ''; // For older browsers
                 });
-
+                
+                // Check for kicked status periodically
                 function checkKickStatus() {
-                    console.log('Checking kick status...');
                     fetch('/quiz/check-attempt/{{ $attempt->id }}')
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Kick status response:', data);
                             if (data.kicked === true) {
                                 Swal.fire({
                                     icon: 'warning',
@@ -508,13 +600,10 @@
                             console.error('Error checking kick status:', error);
                         });
                 }
+                
+                // Check kick status every 5 seconds
                 checkKickStatus();
                 setInterval(checkKickStatus, 5000);
-                // Initial check for answered questions
-                document.querySelectorAll('.question-card').forEach((card, index) => {
-                    checkAndMarkAnswered(index);
-                });
-
             });
         </script>
     @endpush

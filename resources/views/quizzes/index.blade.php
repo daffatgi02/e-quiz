@@ -216,9 +216,9 @@
                                                     <span class="h4">{{ $attempt->score ?? '-' }}</span>
                                                     <small class="d-block">Score</small>
                                                 </div>
-                                                <a href="{{ route('quiz.result', $attempt) }}" class="btn btn-info btn-sm">
+                                                {{-- <a href="{{ route('quiz.result', $attempt) }}" class="btn btn-info btn-sm">
                                                     {{ __('general.view') }}
-                                                </a>
+                                                </a> --}}
                                             </div>
                                         @endif
                                     </div>

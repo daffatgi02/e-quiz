@@ -118,7 +118,7 @@ return [
     'marked' => 'Marked',
     'confirm_submit' => 'Confirm Submit',
     'questions_unanswered' => 'questions unanswered',
-    'confirm_submit_message' => 'Are you sure you want to submit the quiz? You won\'t be able to change your answers after this.',
+    'confirm_submit_message' => 'Are you sure you want to submit the quiz? You wont be able to change your answers after this.',
     'review_answers' => 'Review Answers',
     'submit_quiz' => 'Submit Quiz',
     'token_input' => 'Enter Token',
@@ -147,4 +147,9 @@ return [
     'reset_all_attempts' => 'Reset All Attempts',
     'confirm_reset_all_attempts' => 'Are you sure you want to reset ALL user attempts for this quiz? This action cannot be undone.',
     'all_attempts_reset_success' => ':count attempts have been successfully reset.',
+    'saving' => 'Saving',
+    'saved' => 'Saved',
+    'answer_saved' => 'Answer saved',
+    'answer_not_saved' => 'Failed to save answer',
+    'continue_from_saved' => 'Continuing from last saved',
 ];

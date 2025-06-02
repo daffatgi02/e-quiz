@@ -55,7 +55,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('reports/export/quiz/{quiz}', [ReportController::class, 'exportQuizResults'])->name('reports.export.quiz');
     Route::get('reports/export/attempt/{attempt}', [ReportController::class, 'exportSingleAttempt'])->name('reports.export.attempt');
     Route::get('reports/export/training/{type}', [App\Http\Controllers\Admin\ReportController::class, 'exportTrainingReport'])
-    ->name('reports.export.training');
+        ->name('reports.export.training');
 
 
     // Fix route bulk export - seharusnya di dalam group admin dan dengan parameter quiz
@@ -66,7 +66,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Reset attempt route
     Route::post('quizzes/{quiz}/reset-attempt/{user}', [AdminQuizController::class, 'resetAttempt'])->name('quizzes.reset-attempt');
     Route::post('quizzes/{quiz}/reset-all-attempts', [AdminQuizController::class, 'resetAllAttempts'])
-    ->name('quizzes.reset-all-attempts');
+        ->name('quizzes.reset-all-attempts');
     // Token Management
     Route::post('users/{user}/generate-token', [App\Http\Controllers\Admin\TokenController::class, 'generateToken'])->name('tokens.generate');
     Route::post('users/{user}/reset-pin', [App\Http\Controllers\Admin\TokenController::class, 'resetPin'])->name('tokens.reset-pin');
