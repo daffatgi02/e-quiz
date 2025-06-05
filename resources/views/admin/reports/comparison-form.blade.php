@@ -56,6 +56,50 @@
                                 @enderror
                             </div>
 
+                            <!-- NEW: Filter berdasarkan status kelulusan -->
+                            <div class="mb-3">
+                                <label for="status_filter" class="form-label">{{ __('general.status_filter') }}</label>
+                                <select class="form-select" id="status_filter" name="status_filter">
+                                    <option value="all" {{ old('status_filter', 'all') == 'all' ? 'selected' : '' }}>
+                                        {{ __('general.all_participants') }}
+                                    </option>
+                                    <option value="passed" {{ old('status_filter') == 'passed' ? 'selected' : '' }}>
+                                        {{ __('general.passed_only') }}
+                                    </option>
+                                    <option value="failed" {{ old('status_filter') == 'failed' ? 'selected' : '' }}>
+                                        {{ __('general.failed_only') }}
+                                    </option>
+                                    <option value="completed_post_test" {{ old('status_filter') == 'completed_post_test' ? 'selected' : '' }}>
+                                        {{ __('general.completed_post_test_only') }}
+                                    </option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    Filter peserta berdasarkan hasil Post Test
+                                </small>
+                            </div>
+
+                            <!-- NEW: Sort option -->
+                            <div class="mb-3">
+                                <label for="sort_by" class="form-label">{{ __('general.sort_by') }}</label>
+                                <select class="form-select" id="sort_by" name="sort_by">
+                                    <option value="name" {{ old('sort_by', 'name') == 'name' ? 'selected' : '' }}>
+                                        {{ __('general.name') }}
+                                    </option>
+                                    <option value="post_test_score_desc" {{ old('sort_by') == 'post_test_score_desc' ? 'selected' : '' }}>
+                                        {{ __('general.highest_post_test_score') }}
+                                    </option>
+                                    <option value="post_test_score_asc" {{ old('sort_by') == 'post_test_score_asc' ? 'selected' : '' }}>
+                                        {{ __('general.lowest_post_test_score') }}
+                                    </option>
+                                    <option value="department" {{ old('sort_by') == 'department' ? 'selected' : '' }}>
+                                        {{ __('general.department') }}
+                                    </option>
+                                    <option value="company" {{ old('sort_by') == 'company' ? 'selected' : '' }}>
+                                        {{ __('general.company') }}
+                                    </option>
+                                </select>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="lang" class="form-label">{{ __('general.language') }}</label>
                                 <select class="form-select" id="lang" name="lang">
@@ -73,7 +117,9 @@
                                 <ul class="mb-0 mt-2">
                                     <li>Pilih quiz Pre Test dan Post Test yang ingin dibandingkan</li>
                                     <li>Masukkan judul training yang sesuai</li>
-                                    <li>Laporan akan menampilkan perbandingan skor peserta</li>
+                                    <li><strong>Filter Status:</strong> Pilih untuk menampilkan hanya peserta yang lulus, tidak lulus, atau semua</li>
+                                    <li><strong>Status kelulusan berdasarkan Post Test:</strong> Lead/Supervisor ≥80, Staff ≥70</li>
+                                    <li>Laporan akan menampilkan perbandingan skor peserta sesuai filter yang dipilih</li>
                                 </ul>
                             </div>
 

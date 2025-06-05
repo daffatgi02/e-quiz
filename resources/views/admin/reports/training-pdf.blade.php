@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Training {{ $title }}</title>
+    <title>Laporan Training</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -100,7 +100,7 @@
                 <td><strong>Total Peserta:</strong></td>
                 <td>{{ $totalUsers ?? count($reportData) }}</td>
                 <td><strong>Tanggal Export:</strong></td>
-                <td>{{ $exportDate ?? date('d F Y') }}</td>
+                <td>24 April 2025</td>
             </tr>
         </table>
     </div>
@@ -110,21 +110,21 @@
             <thead>
                 <tr>
                     <th style="width: 4%;">NO</th>
-                    <th style="width: 12%;">NIK</th>
+                    {{-- <th style="width: 12%;">NIK</th> --}}
                     <th style="width: 20%;">NAMA PESERTA</th>
                     <th style="width: 15%;">POSISI</th>
                     {{-- <th style="width: 12%;">DEPARTEMEN</th> --}}
                     <th style="width: 8%;">PRE TEST</th>
                     <th style="width: 8%;">POST TEST</th>
                     <th style="width: 10%;">STATUS</th>
-                    <th style="width: 11%;">PERUSAHAAN</th>
+                    {{-- <th style="width: 11%;">PERUSAHAAN</th> --}}
                 </tr>
             </thead>
             <tbody>
                 @foreach($reportData as $data)
                     <tr>
                         <td class="center">{{ $data['no'] }}</td>
-                        <td class="center">{{ $data['nik'] }}</td>
+                        {{-- <td class="center">{{ $data['nik'] }}</td> --}}
                         <td>{{ $data['name'] }}</td>
                         <td>{{ $data['position'] }}</td>
                         {{-- <td>{{ $data['department'] ?? '-' }}</td> --}}
@@ -133,7 +133,7 @@
                         <td class="center {{ $data['keterangan'] == 'LULUS' || $data['keterangan'] == 'PASSED' ? 'passed' : ($data['keterangan'] == 'TIDAK LULUS' || $data['keterangan'] == 'FAILED' ? 'failed' : '') }}">
                             {{ $data['keterangan'] }}
                         </td>
-                        <td style="font-size: 8px;">{{ $data['company'] ?? '-' }}</td>
+                        {{-- <td style="font-size: 8px;">{{ $data['company'] ?? '-' }}</td> --}}
                     </tr>
                 @endforeach
             </tbody>
@@ -146,7 +146,7 @@
                 $total = count($reportData);
                 $passRate = $total > 0 ? round(($passed / $total) * 100, 1) : 0;
             @endphp
-            <table style="width: 50%; margin-left: auto;">
+            {{-- <table style="width: 50%; margin-left: auto;">
                 <tr>
                     <td><strong>Total Peserta:</strong></td>
                     <td class="center">{{ $total }}</td>
@@ -163,7 +163,7 @@
                     <td><strong>Tingkat Kelulusan:</strong></td>
                     <td class="center"><strong>{{ $passRate }}%</strong></td>
                 </tr>
-            </table>
+            </table> --}}
         </div>
     @else
         <div class="no-data">

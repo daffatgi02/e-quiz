@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
@@ -182,6 +183,8 @@ class ReportController extends Controller
                 'pre_test_quiz_id' => 'required|exists:quizzes,id',
                 'post_test_quiz_id' => 'required|exists:quizzes,id|different:pre_test_quiz_id',
                 'title' => 'required|string|max:255',
+                'status_filter' => 'sometimes|in:all,passed,failed,completed_post_test',
+                'sort_by' => 'sometimes|in:name,post_test_score_desc,post_test_score_asc,department,company',
                 'lang' => 'sometimes|in:id,en'
             ], [
                 'post_test_quiz_id.different' => 'Pre Test dan Post Test tidak boleh sama.',
@@ -191,6 +194,9 @@ class ReportController extends Controller
             ]);
 
             $lang = $validated['lang'] ?? 'id';
+            $statusFilter = $validated['status_filter'] ?? 'all';
+            $sortBy = $validated['sort_by'] ?? 'name';
+
             app()->setLocale($lang);
 
             $preTest = Quiz::findOrFail($validated['pre_test_quiz_id']);
@@ -200,6 +206,8 @@ class ReportController extends Controller
             // Debug: Log quiz information
             \Log::info('Pre Test Quiz: ' . $preTest->title . ' (ID: ' . $preTest->id . ')');
             \Log::info('Post Test Quiz: ' . $postTest->title . ' (ID: ' . $postTest->id . ')');
+            \Log::info('Status Filter: ' . $statusFilter);
+            \Log::info('Sort By: ' . $sortBy);
 
             // Format tanggal dengan aman
             $preTestDate = $preTest->start_date ? $preTest->start_date->format('d F Y') : __('general.not_available');
@@ -208,12 +216,12 @@ class ReportController extends Controller
 
             // Dapatkan semua user yang telah mengambil pre-test atau post-test
             $preTestUserIds = QuizAttempt::where('quiz_id', $preTest->id)
-                ->whereIn('status', ['completed', 'graded']) // Include both completed and graded
+                ->whereIn('status', ['completed', 'graded'])
                 ->pluck('user_id')
                 ->unique();
 
             $postTestUserIds = QuizAttempt::where('quiz_id', $postTest->id)
-                ->whereIn('status', ['completed', 'graded']) // Include both completed and graded
+                ->whereIn('status', ['completed', 'graded'])
                 ->pluck('user_id')
                 ->unique();
 
@@ -225,38 +233,34 @@ class ReportController extends Controller
             \Log::info('Total Unique Users: ' . $userIds->count());
 
             // Dapatkan data user
-            $users = User::whereIn('id', $userIds)->orderBy('name')->get();
+            $users = User::whereIn('id', $userIds)->get();
 
             // Debug: Log users found
             \Log::info('Users found: ' . $users->count());
 
             // Siapkan data untuk report
             $reportData = [];
+            $filterInfo = '';
 
             foreach ($users as $index => $user) {
                 // Get best attempt for pre-test
                 $preTestAttempt = QuizAttempt::where('quiz_id', $preTest->id)
                     ->where('user_id', $user->id)
                     ->whereIn('status', ['completed', 'graded'])
-                    ->orderBy('score', 'desc') // Ambil yang tertinggi
-                    ->orderBy('completed_at', 'desc') // Jika score sama, ambil yang terbaru
+                    ->orderBy('score', 'desc')
+                    ->orderBy('completed_at', 'desc')
                     ->first();
 
                 // Get best attempt for post-test
                 $postTestAttempt = QuizAttempt::where('quiz_id', $postTest->id)
                     ->where('user_id', $user->id)
                     ->whereIn('status', ['completed', 'graded'])
-                    ->orderBy('score', 'desc') // Ambil yang tertinggi
-                    ->orderBy('completed_at', 'desc') // Jika score sama, ambil yang terbaru
+                    ->orderBy('score', 'desc')
+                    ->orderBy('completed_at', 'desc')
                     ->first();
 
                 $preTestScore = $preTestAttempt ? $preTestAttempt->score : '-';
                 $postTestScore = $postTestAttempt ? $postTestAttempt->score : '-';
-
-                // Debug specific user
-                if ($index < 3) { // Log first 3 users for debugging
-                    \Log::info("User: {$user->name} - Pre: {$preTestScore} - Post: {$postTestScore}");
-                }
 
                 // Tentukan passing threshold berdasarkan posisi
                 $position = strtoupper($user->position ?? '');
@@ -267,45 +271,88 @@ class ReportController extends Controller
 
                 $passingScore = $isLeadOrSupervisor ? 80 : 70;
 
-                // Tentukan keterangan (hanya untuk post test)
+                // Tentukan keterangan (berdasarkan post test)
                 $keterangan = '-';
+                $isPassed = false;
+
                 if ($postTestScore !== '-' && is_numeric($postTestScore)) {
-                    $keterangan = $postTestScore >= $passingScore ?
+                    $isPassed = $postTestScore >= $passingScore;
+                    $keterangan = $isPassed ?
                         ($lang == 'en' ? 'PASSED' : 'LULUS') : ($lang == 'en' ? 'FAILED' : 'TIDAK LULUS');
                 }
 
-                $reportData[] = [
-                    'no' => $index + 1,
-                    'nik' => $user->nik ?? '-',
-                    'name' => $user->name,
-                    'position' => $user->position ?? '-',
-                    'department' => $user->department ?? '-',
-                    'company' => $user->perusahaan ?? '-',
-                    'pre_test_score' => $preTestScore,
-                    'post_test_score' => $postTestScore,
-                    'keterangan' => $keterangan,
-                    'passing_score' => $passingScore
-                ];
+                // Apply status filter
+                $includeInReport = true;
+
+                switch ($statusFilter) {
+                    case 'passed':
+                        $includeInReport = $isPassed && $postTestScore !== '-';
+                        $filterInfo = $lang == 'en' ? 'Passed Only' : 'Hanya Yang Lulus';
+                        break;
+                    case 'failed':
+                        $includeInReport = !$isPassed && $postTestScore !== '-';
+                        $filterInfo = $lang == 'en' ? 'Failed Only' : 'Hanya Yang Tidak Lulus';
+                        break;
+                    case 'completed_post_test':
+                        $includeInReport = $postTestScore !== '-';
+                        $filterInfo = $lang == 'en' ? 'Completed Post Test Only' : 'Hanya Yang Selesai Post Test';
+                        break;
+                    case 'all':
+                    default:
+                        $includeInReport = true;
+                        $filterInfo = $lang == 'en' ? 'All Participants' : 'Semua Peserta';
+                        break;
+                }
+
+                if ($includeInReport) {
+                    $reportData[] = [
+                        'no' => count($reportData) + 1, // Renumber after filtering
+                        'nik' => $user->nik ?? '-',
+                        'name' => $user->name,
+                        'position' => $user->position ?? '-',
+                        'department' => $user->department ?? '-',
+                        'company' => $user->perusahaan ?? '-',
+                        'pre_test_score' => $preTestScore,
+                        'post_test_score' => $postTestScore,
+                        'keterangan' => $keterangan,
+                        'passing_score' => $passingScore,
+                        'is_passed' => $isPassed
+                    ];
+                }
+            }
+
+            // Apply sorting
+            $reportData = collect($reportData)->sortBy(function ($item) use ($sortBy) {
+                switch ($sortBy) {
+                    case 'post_test_score_desc':
+                        return $item['post_test_score'] === '-' ? -1 : -$item['post_test_score'];
+                    case 'post_test_score_asc':
+                        return $item['post_test_score'] === '-' ? 999 : $item['post_test_score'];
+                    case 'department':
+                        return $item['department'];
+                    case 'company':
+                        return $item['company'];
+                    case 'name':
+                    default:
+                        return $item['name'];
+                }
+            })->values()->toArray();
+
+            // Renumber after sorting
+            foreach ($reportData as $index => &$data) {
+                $data['no'] = $index + 1;
             }
 
             // Debug: Log report data count
-            \Log::info('Report data count: ' . count($reportData));
+            \Log::info('Report data count after filtering: ' . count($reportData));
 
-            // If no data found, create a sample entry for debugging
+            // If no data found after filtering
             if (empty($reportData)) {
-                \Log::warning('No data found for report');
-
-                // Check if there are any quiz attempts at all
-                $allPreAttempts = QuizAttempt::where('quiz_id', $preTest->id)->count();
-                $allPostAttempts = QuizAttempt::where('quiz_id', $postTest->id)->count();
-
-                \Log::info("All Pre Test attempts: $allPreAttempts");
-                \Log::info("All Post Test attempts: $allPostAttempts");
+                \Log::warning('No data found for report after filtering');
 
                 return redirect()->back()->with(
                     'error',
-                    'Tidak ada data yang ditemukan untuk quiz yang dipilih. ' .
-                        "Pre Test attempts: $allPreAttempts, Post Test attempts: $allPostAttempts"
+                    'Tidak ada data yang ditemukan dengan filter yang dipilih.'
                 );
             }
 
@@ -319,14 +366,18 @@ class ReportController extends Controller
                 'preTestTitle' => $preTest->title,
                 'postTestTitle' => $postTest->title,
                 'lang' => $lang,
-                'totalUsers' => count($reportData)
+                'totalUsers' => count($reportData),
+                'statusFilter' => $statusFilter,
+                'filterInfo' => $filterInfo,
+                'sortBy' => $sortBy
             ]);
 
             // Set paper size and orientation
             $pdf->setPaper('A4', 'landscape');
 
-            // Generate PDF filename dengan tanggal ekspor
-            $filename = 'laporan_training_' . Str::slug($title) . '_' . date('Ymd_His') . '.pdf';
+            // Generate PDF filename dengan filter info
+            $filterSuffix = $statusFilter !== 'all' ? '_' . $statusFilter : '';
+            $filename = 'laporan_training_' . Str::slug($title) . $filterSuffix . '_' . date('Ymd_His') . '.pdf';
 
             return $pdf->download($filename);
         } catch (\Exception $e) {
